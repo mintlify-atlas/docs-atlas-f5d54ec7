@@ -1,0 +1,148 @@
+---
+title: "WindowContext: Hook and Provider for Window State"
+sidebarTitle: "WindowContext"
+description: "WindowContext is the state backbone of Old Windows. WindowProvider owns the windows array; useWindows() exposes open, close, minimize, maximize, and focus."
+---
+
+`WindowContext` is the state backbone of Old Windows. It stores the array of open windows, tracks which window is currently active, and exposes a complete set of management functions through the `useWindows()` hook. Every component in the tree — `Desktop`, `Window`, and `Taskbar` — reads from and writes to this single context rather than managing their own local state.
+
+## Setup
+
+Wrap your application root in `WindowProvider`. Nothing in the Old Windows component tree will function without it.
+
+```jsx
+import { WindowProvider } from './components/WindowContext'
+import { Desktop } from './components/Desktop'
+
+function App() {
+  return (
+    <WindowProvider>
+      <Desktop />
+    </WindowProvider>
+  )
+}
+```
+
+`WindowProvider` initialises two pieces of state:
+
+| State | Type | Initial value |
+|-------|------|---------------|
+| `windows` | `Array` | `[]` |
+| `activeWindowId` | `string \| null` | `null` |
+
+It also maintains a module-level `zIndex` counter (starting at `10`) that is incremented each time `focusWindow` is called, ensuring a newly focused window always renders on top.
+
+## `useWindows()` Hook
+
+Call `useWindows()` inside any component that is a descendant of `WindowProvider` to access the full window management API.
+
+<Warning>
+  `useWindows()` throws the error `"useWindows must be used within WindowProvider"` if called outside of a `WindowProvider` tree. Always ensure `WindowProvider` is an ancestor before calling the hook.
+</Warning>
+
+### Returned values
+
+<ResponseField name="windows" type="Array<WindowState>">
+  The live array of window state objects. Each entry is an object with `id`, `title`, `component`, `icon`, `state`, `zIndex`, `width`, `height`, `defaultX`, and `defaultY` fields. Mutated by all the actions below.
+</ResponseField>
+
+<ResponseField name="activeWindowId" type="string | null">
+  The `id` of the window that currently has focus (i.e., has the navy title bar and sits on top). `null` when no window is focused — for example, after all windows are minimized or closed.
+</ResponseField>
+
+<ResponseField name="openWindow" type="function">
+  Opens a new window or restores/focuses an existing one. See the [openWindow options](#openwindow-options) section below for the full signature.
+</ResponseField>
+
+<ResponseField name="closeWindow" type="function">
+  `closeWindow(id: string) => void` — Removes the window from the `windows` array. If the closed window was the active window, `activeWindowId` is updated to the window with the next-highest `zIndex`, or `null` if no windows remain.
+</ResponseField>
+
+<ResponseField name="minimizeWindow" type="function">
+  `minimizeWindow(id: string) => void` — Sets the target window's `state` to `'minimized'`. If it was the active window, `activeWindowId` is cleared to `null`. The window's Taskbar button remains visible.
+</ResponseField>
+
+<ResponseField name="maximizeWindow" type="function">
+  `maximizeWindow(id: string) => void` — Sets the target window's `state` to `'maximized'` and calls `focusWindow(id)` to bring it to front and mark it active.
+</ResponseField>
+
+<ResponseField name="restoreWindow" type="function">
+  `restoreWindow(id: string) => void` — Sets the target window's `state` back to `'open'` and calls `focusWindow(id)`. Used by the Taskbar when clicking a minimized window button.
+</ResponseField>
+
+<ResponseField name="focusWindow" type="function">
+  `focusWindow(id: string) => void` — Increments the global `zIndex` counter, assigns the new value to the target window, and sets `activeWindowId` to the window's `id`. Called automatically by `maximizeWindow` and `restoreWindow`, and by `Window` itself when clicked.
+</ResponseField>
+
+## `openWindow` Options
+
+`openWindow` has the following signature:
+
+```js
+openWindow(id, title, component, icon, options)
+```
+
+**Positional parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `string` | Unique identifier. If a window with this `id` already exists, it is restored/focused instead of duplicated. |
+| `title` | `string` | Text shown in the title bar and Taskbar button. |
+| `component` | `ReactNode` | The content to render inside the window body. |
+| `icon` | `ReactNode` | Emoji or element shown next to the title. |
+
+**`options` object:**
+
+<ParamField path="width" type="number" default="600">
+  Initial window width in pixels.
+</ParamField>
+
+<ParamField path="height" type="number" default="400">
+  Initial window height in pixels.
+</ParamField>
+
+<ParamField path="defaultX" type="number" default="50 + windows.length * 30">
+  Initial horizontal position from the left edge of the desktop. Cascades automatically if omitted so multiple windows do not stack directly on top of each other.
+</ParamField>
+
+<ParamField path="defaultY" type="number" default="50 + windows.length * 30">
+  Initial vertical position from the top edge of the desktop. Cascades automatically alongside `defaultX`.
+</ParamField>
+
+### Re-opening an existing window
+
+If `openWindow` is called with an `id` that already exists in the `windows` array:
+
+- If that window is **minimized**, it is restored to `'open'` and `focusWindow` is called via `setTimeout`.
+- If it is already **open or maximized**, `focusWindow` is called immediately and no duplicate is created.
+
+## Programmatic Usage Example
+
+```jsx
+import { useWindows } from './components/WindowContext'
+import AboutComponent from './apps/About'
+
+function LaunchButton() {
+  const { openWindow } = useWindows()
+
+  function handleClick() {
+    openWindow(
+      'about',
+      'about_me.html',
+      <AboutComponent />,
+      '👤',
+      { width: 500, height: 450 }
+    )
+  }
+
+  return (
+    <button onClick={handleClick}>
+      Open About Window
+    </button>
+  )
+}
+```
+
+<Tip>
+  The `id` you pass to `openWindow` is the canonical identity of the window. Calling `openWindow('about', ...)` a second time will focus the existing About window rather than opening a second copy — so you can safely call it from multiple places without guarding against duplicates.
+</Tip>

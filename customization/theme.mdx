@@ -1,0 +1,85 @@
+---
+title: "Customizing the Win98 Color Theme"
+sidebarTitle: "Theme"
+description: "A guide to the eight CSS custom properties that control every Win98 color — from the teal desktop to the navy title bar and the gray bevel system."
+---
+
+Old Windows uses a small set of CSS custom properties defined in `:root` inside `assets/main.css`. Every color in the UI — the desktop background, window chrome, title bars, borders, and accent highlights — is derived from these eight variables. Changing a single variable updates every component that references it, so re-theming the entire portfolio is a one-file edit.
+
+## The Color Palette
+
+The `:root` block declares all eight properties:
+
+```css
+:root {
+  --win-desktop:    #008080; /* teal desktop background             */
+  --win-gray:       #c0c0c0; /* standard button/panel background    */
+  --win-gray-light: #dfdfdf; /* highlight side of 3D bevel          */
+  --win-gray-dark:  #808080; /* shadow side of 3D bevel             */
+  --win-gray-darker:#404040; /* outer shadow, deepest border edge   */
+  --win-navy:       #000080; /* active title bar, Start menu        */
+  --win-cyan:       #00ffff; /* avatar background, accent color     */
+  --win-teal:       #2dd4bf; /* secondary teal, hover highlights    */
+}
+```
+
+| Property | Value | Used for |
+|---|---|---|
+| `--win-desktop` | `#008080` | Desktop canvas background |
+| `--win-gray` | `#c0c0c0` | Buttons, panels, window chrome |
+| `--win-gray-light` | `#dfdfdf` | Top/left highlight edge of bevels |
+| `--win-gray-dark` | `#808080` | Inner shadow of bevels |
+| `--win-gray-darker` | `#404040` | Outer bottom/right shadow edge |
+| `--win-navy` | `#000080` | Active title bars, Start menu sidebar |
+| `--win-cyan` | `#00ffff` | Avatar background, accent highlights |
+| `--win-teal` | `#2dd4bf` | Secondary teal, hover states |
+
+## Role of Each Color
+
+**`--win-desktop`** is the iconic teal canvas that fills the entire viewport behind all open windows. It is the most immediately recognizable part of the Windows 95/98 aesthetic — swapping it to a dark or neutral color dramatically shifts the portfolio's mood.
+
+**`--win-gray`** is the mid-tone gray applied to every button face, panel background, and window interior that isn't white. It serves as the base surface color for all interactive chrome elements.
+
+**`--win-gray-light` and `--win-gray-dark`** work together as a highlight/shadow pair to create the classic 3D bevel effect. Light appears on the top and left edges of raised elements; dark appears on the bottom and right. This two-color system is what makes buttons look pressable and panels look lifted. Keeping sufficient contrast between these two values is essential — if they are too similar, the bevel disappears.
+
+**`--win-gray-darker`** adds a second, deeper shadow layer on the outermost bottom and right borders. It is the darkest value in the gray ramp and anchors the raised surface visually.
+
+**`--win-navy`** fills active window title bars and the Start menu sidebar. It provides the strong blue–white contrast that makes focused windows immediately distinguishable from inactive ones.
+
+**`--win-cyan`** is used as the avatar background color and for any accent highlights that need to pop against the gray surfaces. Its high chroma makes it effective for drawing attention to focal points.
+
+**`--win-teal`** is a softer, modern teal used for secondary hover states and subtle highlights. It sits between the vivid `--win-cyan` and the neutral `--win-gray` in visual weight.
+
+## Overriding Colors
+
+To retheme the portfolio, open `assets/main.css` and edit the values inside `:root`. You do not need to touch any component files — every styled element reads directly from these variables.
+
+```css
+/* In assets/main.css — override the :root block */
+:root {
+  --win-desktop: #1a1a2e; /* dark navy instead of teal   */
+  --win-navy:    #16213e; /* darker active title bars    */
+}
+```
+
+Only the properties you list will change; the rest keep their defaults. The example above swaps the teal desktop for a dark navy, giving the portfolio a midnight aesthetic while leaving the gray bevel system intact.
+
+## Tailwind Integration
+
+Tailwind utility classes such as `bg-win-navy`, `text-win-navy`, `bg-win-gray`, and `border-win-gray-light` are generated from these CSS variables via the project's `tailwind.config.js`. You can use them directly in JSX alongside the standard Win98 border utility classes:
+
+```jsx
+<div className="bg-win-navy text-white font-pixel px-2 py-1">
+  Active Title Bar
+</div>
+
+<div className="bg-win-desktop w-full h-screen">
+  Desktop Canvas
+</div>
+```
+
+Any update you make to a CSS variable is immediately reflected in every component that uses the corresponding Tailwind utility — no Tailwind config edits required.
+
+<Note>
+  Keep `--win-gray-light` noticeably lighter than `--win-gray-darker`. The 3D bevel illusion on buttons and panels depends on sufficient contrast between the highlight and shadow edges. If you bring these two values too close together, all raised surfaces will appear flat.
+</Note>

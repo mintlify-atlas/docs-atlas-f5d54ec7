@@ -1,0 +1,107 @@
+---
+title: "Win98 CSS Border Utility Classes"
+sidebarTitle: "CSS Classes"
+description: "Reference for the three Win98 border utility classes — win-border-outset, win-border-inset, and win-border-window — and when to use each one."
+---
+
+Old Windows ships three CSS utility classes that reproduce the characteristic Windows 98 beveled border appearance without any third-party library. Each class pairs multi-directional borders with an `inset` box-shadow to simulate depth, and all three are available globally through `assets/main.css`. Understanding when to reach for each one is the key to keeping new UI elements visually consistent with the rest of the portfolio.
+
+## The Three Classes
+
+### `.win-border-outset`
+
+Used on **raised, clickable elements** — buttons in their default state, desktop icons, panels, and any surface that should appear to sit above the page.
+
+```css
+.win-border-outset {
+  border-top:    2px solid var(--win-gray-light);
+  border-left:   2px solid var(--win-gray-light);
+  border-right:  2px solid var(--win-gray-darker);
+  border-bottom: 2px solid var(--win-gray-darker);
+  box-shadow: inset -1px -1px 0 0 var(--win-gray-dark),
+              inset  1px  1px #fff;
+  background-color: var(--win-gray);
+}
+```
+
+Light borders on the top and left edges suggest an upward light source. Dark borders on the bottom and right cast a shadow beneath the element. The `inset` shadows add a second layer of depth just inside the border edges.
+
+### `.win-border-inset`
+
+Used on **sunken elements** — text inputs, pressed/active buttons, and content areas that should appear recessed into the surface.
+
+```css
+.win-border-inset {
+  border-top:    2px solid var(--win-gray-darker);
+  border-left:   2px solid var(--win-gray-darker);
+  border-right:  2px solid var(--win-gray-light);
+  border-bottom: 2px solid var(--win-gray-light);
+  box-shadow: inset -1px -1px #fff,
+              inset  1px  1px 0 0 var(--win-gray-dark);
+  background-color: #fff;
+}
+```
+
+The shadow/highlight assignment is exactly reversed from `outset` — dark edges on top and left make the element appear pushed in, while light edges on the bottom and right suggest the far wall of a recess.
+
+### `.win-border-window`
+
+Used on the **outer shell of Window components** — the border that wraps the entire window frame including the title bar, content area, and status bar.
+
+```css
+.win-border-window {
+  border-top:    2px solid var(--win-gray-light);
+  border-left:   2px solid var(--win-gray-light);
+  border-right:  2px solid var(--win-gray-darker);
+  border-bottom: 2px solid var(--win-gray-darker);
+  box-shadow: inset -1px -1px 0 0 var(--win-gray-dark),
+              inset  1px  1px #fff;
+  background-color: var(--win-gray);
+  padding: 2px;
+}
+```
+
+Visually identical to `outset` but adds `padding: 2px`, which creates the narrow inner margin between the outer border and the window's interior content. This matches the authentic Win98 window frame spacing.
+
+## Usage in JSX
+
+```jsx
+{/* Button in its default raised state */}
+<button className="win-border-outset px-2 py-1 font-pixel text-sm">
+  Click me
+</button>
+
+{/* Button in its pressed/active state */}
+<button className="win-border-inset px-2 py-1 font-pixel text-sm">
+  Pressed
+</button>
+
+{/* Outer shell of a window component */}
+<div className="win-border-window">
+  Window content goes here
+</div>
+```
+
+## The Inset Box-Shadow Trick
+
+The `box-shadow` declaration on each class does two things at once using the `inset` keyword:
+
+- `inset 1px 1px #fff` — draws a white 1 px line just inside the top and left edges of the element, adding a bright inner highlight that reinforces the raised look.
+- `inset -1px -1px var(--win-gray-dark)` — draws a mid-gray 1 px line just inside the bottom and right edges, adding an inner shadow that deepens the bevel.
+
+Together with the outer border colors, this creates a four-layer depth effect: outer highlight → outer shadow → inner shadow → inner highlight. That is the exact construction Windows 98 uses for all of its chrome surfaces.
+
+## Overriding the Background Color
+
+Both `.win-border-outset` and `.win-border-window` set `background-color: var(--win-gray)` and `.win-border-inset` sets `background-color: #fff`. If you need a different background, add a Tailwind `bg-*` class — Tailwind's specificity will override the property declared in the utility class:
+
+```jsx
+{/* Transparent outset panel — override the gray background */}
+<div className="win-border-outset bg-transparent p-4">
+  Custom background panel
+</div>
+```
+
+<Tip>
+  Simulate a clickable button press by toggling between the two border styles on pointer events. In Tailwind you can use `active:win-border-inset` if you extend the config, or swap the class name in a React `onMouseDown`/`onMouseUp` handler to give your buttons authentic Win98 tactile feedback.
+</Tip>

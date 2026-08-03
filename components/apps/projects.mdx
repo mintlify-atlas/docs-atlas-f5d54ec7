@@ -1,0 +1,215 @@
+---
+title: "Projects Window: Windows Explorer File Manager"
+sidebarTitle: "Projects"
+description: "A Windows Explorer-style project showcase with a sidebar, Icons/Details view toggle, address bar, and four clickable project files."
+---
+
+The Projects window (`my_projects/`) turns your portfolio work into a Windows Explorer file browser. A left-hand sidebar shows the selected project's details, while the main pane lists your projects as either large icons or a sortable details table — toggled with toolbar buttons. An address bar at the top is permanently set to `C:\My Documents\Projects`, cementing the illusion that you are browsing a real 1998 file system.
+
+## Visual Design
+
+The component uses `bg-white font-pixel text-sm` as its base and layers classic Win98 chrome on top:
+
+- **Toolbar** — a `win-border-outset bg-win-gray` bar containing the File/Edit/View/Help menu labels and the **Icons** / **Details** toggle buttons. The active view button renders as `win-border-inset` (pressed-in).
+- **Address bar** — a separate `win-border-outset` row below the toolbar with an inset `win-border-inset bg-white` input field showing the path as static text.
+- **Sidebar** — `w-1/3 max-w-[250px]` panel on the left. When nothing is selected it shows italic placeholder text; once a file is clicked it displays the project icon (📄), filename, type, size, modified date, and a description in a `bg-[#ffffcc]` post-it style box.
+- **Main pane** — fills the remaining width; switches between a `<table>` (Details) and a `flex-wrap` icon grid (Icons) based on React state.
+
+## Features
+
+<Steps>
+  <Step title="Details view (default)">
+    A `<table>` renders all four project files with **Name**, **Size**, **Type**, and **Modified** columns. Column headers use `win-border-outset` to look like the old Explorer column buttons. Clicking any row highlights it with `bg-win-navy text-white` and populates the sidebar.
+  </Step>
+  <Step title="Icons view">
+    Clicking the **Icons** toolbar button switches the main pane to a `flex-wrap` grid of large `📄` icons with the filename below. Single-clicking an icon selects it and updates the sidebar.
+  </Step>
+  <Step title="Sidebar detail panel">
+    When a project is selected, the sidebar shows: the 📄 icon, the filename, the file type label, a horizontal divider, size, modified date, and the project description in a post-it box. Clicking any other file immediately updates the panel.
+  </Step>
+  <Step title="Toolbar view toggle">
+    The `view` state variable (`"icons"` or `"details"`) is toggled by the two toolbar buttons. The active button gets the `win-border-inset bg-win-gray-light` classes to appear depressed.
+  </Step>
+</Steps>
+
+## Project data structure
+
+Each project is an object in the `projects` array defined just above the component in `config/apps.js`:
+
+```js
+{
+  id: 'p1',
+  name: 'E-Commerce_Platform.exe',  // displayed filename
+  type: 'Application',              // shown in the Type column & sidebar
+  size: '14.2 MB',                  // shown in the Size column & sidebar
+  date: '10/24/2023',               // shown in the Modified column & sidebar
+  desc: 'A full-stack Next.js e-commerce solution with Stripe integration.'
+  // shown in the sidebar post-it box
+}
+```
+
+The full default array:
+
+```js
+const projects = [
+  {
+    id: 'p1', name: 'E-Commerce_Platform.exe', type: 'Application',
+    size: '14.2 MB', date: '10/24/2023',
+    desc: 'A full-stack Next.js e-commerce solution with Stripe integration.'
+  },
+  {
+    id: 'p2', name: 'Dashboard_UI.dll', type: 'System Extension',
+    size: '2.1 MB', date: '08/15/2023',
+    desc: 'React-based analytics dashboard with real-time data visualization.'
+  },
+  {
+    id: 'p3', name: 'Retro_Portfolio.html', type: 'HTML Document',
+    size: '45 KB', date: 'Today',
+    desc: 'You are looking at it!'
+  },
+  {
+    id: 'p4', name: 'API_Gateway.sys', type: 'System File',
+    size: '8.4 MB', date: '03/12/2023',
+    desc: 'Node.js microservices gateway with rate limiting and auth.'
+  },
+];
+```
+
+## Customization
+
+<Steps>
+  <Step title="Replace the projects array">
+    Find the `projects` array at the top of the `ProjectsComponent` section in `config/apps.js` and swap in your own work. The `name` field should follow the retro file-extension convention (`.exe`, `.dll`, `.html`, `.sys`, `.zip`) for best effect:
+
+    ```js
+    const projects = [
+      {
+        id: 'p1',
+        name: 'My_App.exe',
+        type: 'Application',
+        size: '22.4 MB',
+        date: '01/15/2024',
+        desc: 'A SaaS tool built with Next.js, Prisma, and Tailwind CSS.'
+      },
+      // add more objects…
+    ];
+    ```
+  </Step>
+  <Step title="Add a project link">
+    The sidebar currently displays static text. To make projects linkable, add a `url` field to each project object and render it inside the sidebar panel:
+
+    ```jsx
+    {/* Inside the sidebar panel, after the description box */}
+    {selected.url && (
+      <a href={selected.url} target="_blank" rel="noreferrer"
+         className="mt-2 text-blue-800 underline font-pixel text-xs">
+        View Project →
+      </a>
+    )}
+    ```
+  </Step>
+  <Step title="Change the address bar path">
+    The path is hardcoded as a string inside the address bar `<div>`. Find it and update it:
+
+    ```jsx
+    <div className="win-border-inset bg-white flex-1 px-2 py-1 text-black">
+      C:\My Documents\Projects
+    </div>
+    ```
+  </Step>
+</Steps>
+
+## Core component snippet
+
+```jsx
+const ProjectsComponent = () => {
+  const [selectedId, setSelectedId] = React.useState(null);
+  const [view, setView]             = React.useState('details');
+  const selected = projects.find(p => p.id === selectedId);
+
+  return (
+    <div className="h-full flex flex-col bg-white font-pixel text-sm">
+      {/* Toolbar */}
+      <div className="win-border-outset bg-win-gray p-1 flex gap-2 items-center">
+        {/* File / Edit / View / Help labels … */}
+        <button className={view === 'icons' ? 'win-border-inset' : 'win-border-outset'}
+                onClick={() => setView('icons')}>Icons</button>
+        <button className={view === 'details' ? 'win-border-inset' : 'win-border-outset'}
+                onClick={() => setView('details')}>Details</button>
+      </div>
+
+      {/* Address bar */}
+      <div className="win-border-outset bg-win-gray p-1 flex items-center gap-2">
+        <span className="px-2">Address</span>
+        <div className="win-border-inset bg-white flex-1 px-2 py-1">
+          C:\My Documents\Projects
+        </div>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-1/3 max-w-[250px] bg-white border-r-2 p-4 overflow-y-auto">
+          {selected ? (
+            <>
+              <div className="text-4xl mb-2">📄</div>
+              <div className="font-bold">{selected.name}</div>
+              <div className="text-gray-600">{selected.type}</div>
+              <div className="mt-4 p-2 bg-[#ffffcc] border border-black text-xs font-serif">
+                {selected.desc}
+              </div>
+            </>
+          ) : (
+            <div className="text-gray-500 italic">Select an item to view its description.</div>
+          )}
+        </div>
+
+        {/* Main pane — Details view */}
+        <div className="flex-1 bg-white overflow-y-auto p-2">
+          {view === 'details' ? (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr>
+                  <th className="bg-win-gray win-border-outset px-2 py-1">Name</th>
+                  <th className="bg-win-gray win-border-outset px-2 py-1">Size</th>
+                  <th className="bg-win-gray win-border-outset px-2 py-1">Type</th>
+                  <th className="bg-win-gray win-border-outset px-2 py-1">Modified</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map(p => (
+                  <tr key={p.id}
+                      className={`cursor-pointer ${selectedId === p.id
+                        ? 'bg-win-navy text-white' : 'hover:bg-blue-50'}`}
+                      onClick={() => setSelectedId(p.id)}>
+                    <td className="px-2 py-1">📄 {p.name}</td>
+                    <td className="px-2 py-1">{p.size}</td>
+                    <td className="px-2 py-1">{p.type}</td>
+                    <td className="px-2 py-1">{p.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            /* Icons view */
+            <div className="flex flex-wrap gap-6 p-4">
+              {projects.map(p => (
+                <div key={p.id}
+                     className={`flex flex-col items-center gap-1 w-24 cursor-pointer p-2
+                       ${selectedId === p.id ? 'bg-win-navy text-white' : ''}`}
+                     onClick={() => setSelectedId(p.id)}>
+                  <div className="text-4xl">📄</div>
+                  <div className="text-center text-xs break-words w-full">{p.name}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+<Note>
+  The Icons view currently uses the same `📄` emoji for every file. To differentiate file types visually, add an `icon` field to each project object (e.g. `🌐` for `.html`, `⚙️` for `.exe`) and render `p.icon` instead of the hardcoded `📄`.
+</Note>

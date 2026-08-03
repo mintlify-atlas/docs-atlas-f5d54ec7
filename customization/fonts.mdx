@@ -1,0 +1,69 @@
+---
+title: "Pixel Fonts and Typography in Old Windows"
+sidebarTitle: "Fonts"
+description: "A guide to the four font families used in Old Windows — their Tailwind utility classes, loading strategy, and the UI contexts each one is designed for."
+---
+
+Old Windows uses four distinct font families to reinforce its retro aesthetic. Each typeface is chosen for a specific context: pixel UI chrome, LED-style digits, readable body content, and terminal output. All four are loaded via a single Google Fonts `@import` in `assets/main.css` and exposed as Tailwind utility classes, so you can apply them anywhere in JSX with a single class name.
+
+## Font Families
+
+### Pixelify Sans → `font-pixel`
+
+Pixelify Sans is the primary UI font for the entire portfolio. It carries the characteristic chunky, grid-aligned letterforms of classic pixel art fonts while remaining legible at small sizes. It is used everywhere the Windows 98 shell would show text: window title bars, taskbar button labels, desktop icon names, menu items, and form labels.
+
+### VT323 → `font-vt323`
+
+VT323 is a monospace terminal typeface modeled on the character ROM of vintage CRT monitors. In Old Windows it is used exclusively for the LED visitor counter digits displayed on the desktop, where its angular, dot-matrix character shapes sell the illusion of a hardware counter.
+
+### Tinos → `font-serif`
+
+Tinos is a metrically compatible replacement for Times New Roman. It serves as the body text font for content-heavy windows such as the About section and Case Studies, where a proportional serif improves readability over long passages compared to the pixel fonts.
+
+### Courier New → `font-mono`
+
+Courier New is the standard monospace fallback used in Notepad-style and terminal-style windows such as Work History and the Blog terminal view. It reinforces the feeling of typed output or a plain-text editor, consistent with classic Windows accessories.
+
+## Loading Fonts
+
+All four families are imported from Google Fonts at the top of `assets/main.css`:
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=VT323&display=swap');
+```
+
+The `display=swap` parameter ensures text remains visible using a fallback font while the custom fonts are loading, preventing invisible text during the initial page load. Pixelify Sans is fetched with four weight variants (400–700); Tinos includes both regular and italic weights; VT323 has a single weight.
+
+## Tailwind Utility Classes
+
+The `font-pixel` and `font-vt323` classes are registered in `tailwind.config.js` so they are available alongside Tailwind's built-in font utilities. `font-serif` and `font-mono` map to Tailwind's default serif and mono stacks respectively, with Tinos and Courier New as the first entries.
+
+```jsx
+{/* Window title bar label */}
+<div className="font-pixel text-sm text-white">
+  My Portfolio.exe
+</div>
+
+{/* LED visitor counter */}
+<div className="font-vt323 text-2xl text-win-cyan">
+  1337042
+</div>
+
+{/* About section body text */}
+<div className="font-serif text-base leading-relaxed">
+  Biography content and longer prose passages go here.
+</div>
+
+{/* Terminal / Notepad output */}
+<div className="font-mono text-sm whitespace-pre">
+  C:\&gt; dir /w
+</div>
+```
+
+## Font Size Guidance
+
+Because Pixelify Sans is a pixel font, it renders most cleanly at sizes that align with its internal grid. Tailwind's `text-xs` (12 px) and `text-sm` (14 px) work well for UI labels; `text-base` (16 px) and above suit headings inside windows. VT323 is designed for display use and looks best at `text-xl` or larger. Tinos and Courier New follow standard web typography sizing conventions.
+
+<Tip>
+  Keep Pixelify Sans (`font-pixel`) on all shell-level UI elements — title bars, taskbar buttons, desktop icon labels, and menu items. Swapping it out for a system font or a different display font will break the Win98 illusion more than any other single change, because the pixel letterforms are what make the chrome feel period-accurate.
+</Tip>

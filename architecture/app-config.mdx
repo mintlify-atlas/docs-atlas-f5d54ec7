@@ -1,0 +1,131 @@
+---
+title: "App Config: Registering and Customizing Windows in apps.js"
+sidebarTitle: "App Config"
+description: "The apps array in config/apps.js is the single source of truth for all desktop icons and windows. Learn every field and how Desktop and Taskbar consume it."
+---
+
+Every window in Old Windows — its icon on the desktop, its entry in the Start menu, its title bar label, and the content rendered inside it — is declared in a single place: the `apps` array exported from `config/apps.js`. Nothing else in the codebase needs to change when you add, remove, or reorder an app. Desktop and Taskbar both import the same array and derive their UI from it.
+
+## The apps array structure
+
+Here is the complete shape of an app entry, drawn directly from the source:
+
+```js
+// config/apps.js
+const apps = [
+  {
+    id: 'home',
+    title: 'index.html',
+    icon: <span>🏠</span>,
+    component: HomeComponent,
+    width: 700,
+    height: 500
+  },
+  {
+    id: 'about',
+    title: 'about_me.html',
+    icon: <span>👤</span>,
+    component: AboutComponent,
+    width: 500,
+    height: 450
+  },
+  // ... seven more entries
+]
+
+export { apps }
+```
+
+Each object in the array is consumed in three places:
+
+1. **Desktop** — iterates `apps` to render one desktop icon `div` per entry. The `icon` is displayed at `text-4xl`; the `title` is shown below it in `font-pixel`. Double-clicking calls `openWindow(entry.id, entry.title, <entry.component />, entry.icon, { width: entry.width, height: entry.height })`.
+2. **Taskbar Start menu** — iterates `apps` to render one menu item per entry. The `icon` is shown in a 24×24 container; the `title` is shown underlined beside it. Clicking opens the window and closes the Start menu.
+3. **Window status bar (WebRing nav)** — uses `apps.findIndex` to locate the current window and computes the previous, random, and next entries for the Prev / Random / Next buttons.
+
+## Field reference
+
+<ParamField path="id" type="string" required>
+  A unique identifier for the window. Used as the React key on the desktop icon, as the key in the `windows` context array, and as the argument to all context actions (`openWindow`, `closeWindow`, `focusWindow`, etc.). Must be unique across all entries in the array. Example: `'about'`, `'blog'`, `'contact'`.
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  The human-readable display name. Shown as the desktop icon label, the window title bar text, and the Start menu item text. Old Windows uses retro filenames here (`'about_me.html'`, `'my_projects/'`, `'~/blog'`) but you can use any string. Truncated with `overflow-hidden text-ellipsis` when it overflows its container.
+</ParamField>
+
+<ParamField path="icon" type="JSX element" required>
+  A JSX element (typically a `<span>` wrapping an emoji) rendered as the desktop icon, the window title bar icon (16×16), and the Start menu icon (24×24). All nine built-in icons use emoji wrapped in `<span>` elements, e.g. `<span>🏠</span>`. You can substitute any React element — an `<img>`, an SVG, or a custom icon component.
+</ParamField>
+
+<ParamField path="component" type="React component" required>
+  A React component (not a JSX element — no `< />`). Desktop and Taskbar both instantiate it at open time with `<entry.component />`. This component receives no props and fills the window body area. It should size itself to `h-full` / `w-full` so it fills the available space inside the window chrome.
+</ParamField>
+
+<ParamField path="width" type="number" default="600">
+  The initial window width in pixels when the window first opens. Passed as `width` in the `openWindow` options object and stored on the window state object. Has no effect when the window is maximized. Defaults to `600` if omitted.
+</ParamField>
+
+<ParamField path="height" type="number" default="400">
+  The initial window height in pixels when the window first opens. Passed as `height` in the `openWindow` options object and stored on the window state object. Has no effect when the window is maximized. Defaults to `400` if omitted.
+</ParamField>
+
+## All nine built-in apps
+
+The full `apps` array shipped with Old Windows, in declaration order:
+
+| # | id | title | icon | width | height |
+|---|-----|-------|------|-------|--------|
+| 0 | `home` | `index.html` | 🏠 | 700 | 500 |
+| 1 | `about` | `about_me.html` | 👤 | 500 | 450 |
+| 2 | `projects` | `my_projects/` | 📁 | 800 | 600 |
+| 3 | `skills` | `skillz.html` | ⚙️ | 600 | 400 |
+| 4 | `work` | `work_history.txt` | 📝 | 550 | 500 |
+| 5 | `case_studies` | `case_studies/` | 📖 | 750 | 600 |
+| 6 | `blog` | `~/blog` | 🌐 | 650 | 550 |
+| 7 | `contact` | `sign_my_guestbook.cgi` | ✉️ | 450 | 500 |
+| 8 | `testimonials` | `kind_words.html` | 💬 | 600 | 450 |
+
+The array order determines the order of icons on the desktop (top to bottom, left column), the order of items in the Start menu, and the sequence used by the WebRing Prev / Next navigation buttons in every window's status bar.
+
+## How Desktop consumes the array
+
+```js
+// Desktop.js (simplified)
+import { apps } from '../config/apps.js';
+
+apps.map(app => (
+  <div
+    key={app.id}
+    onDoubleClick={() =>
+      openWindow(app.id, app.title, <app.component />, app.icon,
+        { width: app.width, height: app.height })
+    }
+  >
+    <div className="text-4xl">{app.icon}</div>
+    <div className="font-pixel text-xs text-white">{app.title}</div>
+  </div>
+))
+```
+
+## How Taskbar consumes the array
+
+```js
+// Taskbar.js — Start menu (simplified)
+import { apps } from '../config/apps.js';
+
+apps.map(app => (
+  <button
+    key={app.id}
+    onClick={() => {
+      openWindow(app.id, app.title, <app.component />, app.icon,
+        { width: app.width, height: app.height });
+      setStartMenuOpen(false);
+    }}
+  >
+    <span>{app.icon}</span>
+    <span>{app.title}</span>
+  </button>
+))
+```
+
+<Tip>
+  Ready to add your own window? Head to the customization guide for step-by-step instructions on creating a new component, adding it to the `apps` array, and seeing it appear as a desktop icon and Start menu entry immediately.
+</Tip>

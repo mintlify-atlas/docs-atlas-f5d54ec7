@@ -1,0 +1,87 @@
+---
+title: "How Old Windows Is Structured and Architected Inside"
+sidebarTitle: "Overview"
+description: "A walkthrough of Old Windows' component hierarchy, WindowContext data flow, and the config layer that drives both desktop icons and the taskbar."
+---
+
+Old Windows follows a straightforward React architecture: a single-page app mounted at `<div id="root">` in `index.html`, bundled by Vite, with all window state held in a React context at the top of the tree. There are no external state managers, no server-side rendering, and no routing library — just four components, one context, and one config array that together produce the full Win98 desktop experience.
+
+## Component tree
+
+The render hierarchy from root to leaf looks like this:
+
+<Steps>
+  <Step title="WindowProvider (WindowContext.js)">
+    The outermost wrapper. It creates a React `useState` array called `windows` and exposes six action callbacks — `openWindow`, `closeWindow`, `minimizeWindow`, `maximizeWindow`, `restoreWindow`, and `focusWindow` — through context. Every component that touches window state reads from this context via the `useWindows()` hook.
+  </Step>
+
+  <Step title="Desktop (Desktop.js)">
+    Mounted directly inside `WindowProvider`. Desktop does four things simultaneously:
+    - Maps over the `apps` array from `config/apps.js` to render one desktop icon `div` per app. Single-click selects; double-click calls `openWindow`.
+    - Maps over the `windows` array from context to render one `<Window>` component per open (or maximized) window.
+    - Renders the visitor counter widget (bottom-right, starts at `1337042`, randomly increments every ~3 s).
+    - Renders the `<Taskbar>` and the two CRT effect divs (`crt-overlay` and `crt-flicker`).
+  </Step>
+
+  <Step title="Window (Window.js)">
+    One instance per entry in the `windows` context array. Each Window is a Framer Motion `motion.div` that handles dragging (via `useDragControls`), minimize/maximize/close title-bar buttons, and a status bar with WebRing navigation (Prev / Random / Next). Returns `null` when the window's state is `"minimized"`.
+  </Step>
+
+  <Step title="Taskbar (Taskbar.js)">
+    Fixed to the bottom of the viewport at `z-index: 9999`. Contains the Start button (which toggles the Start menu pop-up), one taskbar button per open window, and a live clock that updates every second. Clicking a taskbar button focuses, minimizes, or restores the corresponding window depending on its current state.
+  </Step>
+</Steps>
+
+## Data flow
+
+All mutable state lives exclusively in `WindowContext`. No component maintains its own copy of which windows are open — they read the `windows` array and call the context actions:
+
+```
+apps array (static config)
+        │
+        ▼
+  Desktop reads apps → renders icons
+        │
+        │ user double-clicks icon
+        ▼
+  openWindow(id, title, component, icon, { width, height })
+        │
+        ▼
+  WindowContext.windows state (array of window objects)
+        │
+        ├─── Desktop maps windows → renders <Window> instances
+        │
+        └─── Taskbar maps windows → renders taskbar buttons
+```
+
+When `openWindow` is called it appends a new window object to the `windows` array. When `closeWindow` is called it filters that object out. Every other action (`minimizeWindow`, `maximizeWindow`, `restoreWindow`, `focusWindow`) produces a new array via `.map()` — the state is never mutated directly. Because Desktop and Taskbar both derive their output from the same `windows` array, they stay in sync automatically through React's re-render cycle.
+
+## Config layer
+
+`config/apps.js` exports a single `apps` array. This array is the only place in the codebase where the nine built-in apps are declared. Desktop imports it to render icons; Taskbar imports it to populate the Start menu and to power WebRing navigation inside each window's status bar.
+
+Each entry in the array looks like:
+
+```js
+{
+  id: 'home',
+  title: 'index.html',
+  icon: <span>🏠</span>,
+  component: HomeComponent,
+  width: 700,
+  height: 500
+}
+```
+
+See the [App Config](/architecture/app-config) page for a full field reference and instructions for adding your own entries.
+
+## Architecture sub-pages
+
+<CardGroup cols={2}>
+  <Card title="Window System" icon="window-restore" href="/architecture/window-system">
+    Drag mechanics, Framer Motion integration, z-index stacking, window state lifecycle, and the WebRing navigation bar.
+  </Card>
+  <Card title="App Config" icon="sliders" href="/architecture/app-config">
+    The `apps` array structure, all supported fields, and how Desktop and Taskbar consume the config to render icons and menu items.
+  </Card>
+</CardGroup>

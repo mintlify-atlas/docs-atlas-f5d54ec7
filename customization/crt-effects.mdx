@@ -1,0 +1,131 @@
+---
+title: "CRT Screen Effects: Scanlines and Flicker"
+sidebarTitle: "CRT Effects"
+description: "How the scanline overlay, flicker animation, and blink class give Old Windows its retro CRT monitor look — and how to adjust intensity or disable them."
+---
+
+Old Windows layers two CSS-driven effects over the entire desktop to simulate the look of a CRT monitor: a semi-transparent scanline grid and a subtle flicker animation. A third utility class, `.blink`, handles blinking text elements such as the welcome header and cursor indicators. All three live in `assets/main.css` and are applied by the `Desktop` component. Adjusting the intensity or disabling the effects entirely requires only a few CSS edits or the removal of two JSX lines.
+
+## The Two CRT Layers
+
+### `.crt-overlay` — Scanlines
+
+The scanline layer is a fixed, full-viewport `div` that sits above every other element on the page. It uses a repeating CSS gradient to draw horizontal lines 2 px apart, mimicking the phosphor row structure of a CRT display.
+
+```css
+.crt-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(#12101000 50%, #0000001a 50%);
+  background-size: 100% 4px; /* 4px tile = 2px light + 2px dark */
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.6;
+}
+```
+
+The gradient alternates between fully transparent (`#12101000`) and a very faint black (`#0000001a`) every 2 px within a 4 px repeating tile. At `opacity: 0.6` the effect is visible but not distracting. `pointer-events: none` ensures the overlay never intercepts clicks intended for windows or icons below it.
+
+### `.crt-flicker` — Screen Flicker
+
+The flicker layer is a fixed, inset-zero white `div` that uses `mix-blend-mode: overlay` and starts at `opacity: 0`. A short looping animation pulses its opacity between 0.85 and 1, producing the subtle brightness variation of a CRT refresh cycle.
+
+```css
+@keyframes flicker {
+  0%   { opacity: 0.95 }
+  5%   { opacity: 0.85 }
+  10%  { opacity: 0.95 }
+  15%  { opacity: 1    }
+  100% { opacity: 1    }
+}
+
+.crt-flicker {
+  animation: flicker 0.15s infinite;
+}
+```
+
+The animation runs every 0.15 seconds, which at typical frame rates produces an irregular shimmer rather than a perceptible pulse. The `mix-blend-mode: overlay` on the white element brightens the layers beneath it during the pulse without washing them out.
+
+## JSX in the Desktop Component
+
+Both layers are rendered as sibling `div` elements near the top of the `Desktop` component's return value:
+
+```jsx
+{/* Scanline grid — full viewport, non-interactive */}
+<div className="crt-overlay" />
+
+{/* Flicker shimmer — white overlay with blend mode */}
+<div className="crt-flicker fixed inset-0 bg-white mix-blend-overlay opacity-0 pointer-events-none" />
+```
+
+## The Blink Utility
+
+The `.blink` class produces a hard on/off blink used for elements like the desktop welcome header and cursor characters. Unlike the smooth opacity easing of `.crt-flicker`, this blink cuts abruptly between fully visible and fully hidden every half-second:
+
+```css
+@keyframes blink {
+  0%,  49% { opacity: 1 }
+  50%, 100% { opacity: 0 }
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+```
+
+You can apply it to any inline element to make it flash:
+
+```jsx
+<span className="blink font-pixel text-win-cyan">NEW!</span>
+
+<span className="font-pixel">C:\&gt;<span className="blink">_</span></span>
+```
+
+## Adjusting the Effects
+
+### Change scanline intensity
+
+Edit the `opacity` value on `.crt-overlay` in `assets/main.css`. Lower values reduce the visibility of the scanlines; set it to `0` to disable the effect while keeping the element in the DOM:
+
+```css
+.crt-overlay {
+  opacity: 0.3; /* lighter scanlines */
+}
+```
+
+### Change scanline density
+
+Edit the `background-size` property. A smaller tile height increases scanline density; a larger one spreads them out:
+
+```css
+.crt-overlay {
+  background-size: 100% 6px; /* wider scanlines — less dense */
+}
+```
+
+### Change flicker speed
+
+Edit the duration in the `.crt-flicker` animation declaration. A longer duration makes each cycle more perceptible; a shorter one blends into imperceptibility:
+
+```css
+.crt-flicker {
+  animation: flicker 0.4s infinite; /* slower, more noticeable flicker */
+}
+```
+
+### Disable CRT effects entirely
+
+Remove or comment out the two CRT `div` elements in `Desktop.js`:
+
+```jsx
+{/* Comment out or delete these two lines in the Desktop component */}
+{/* <div className="crt-overlay" /> */}
+{/* <div className="crt-flicker fixed inset-0 bg-white mix-blend-overlay opacity-0 pointer-events-none" /> */}
+```
+
+The rest of the portfolio will render normally without the overlay. The `.blink` class is independent and will continue to work on any elements that use it.
+
+<Note>
+  The `.crt-overlay` is positioned at `z-index: 9999` — the same layer as the taskbar in many configurations. Because it has `pointer-events: none`, it never blocks interaction with elements beneath it. If you add elements with a `z-index` above 9999, they will render above the scanline overlay and appear unfiltered.
+</Note>

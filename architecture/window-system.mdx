@@ -1,0 +1,152 @@
+---
+title: "Window System: Drag, Resize, and z-Index Management"
+sidebarTitle: "Window System"
+description: "How Old Windows manages window lifecycle, Framer Motion drag controls, z-index stacking, cascading default positions, and the WebRing status bar."
+---
+
+The window system is the heart of the Old Windows experience. Every window is a self-contained Framer Motion `motion.div` that reads its position, size, and state from `WindowContext` and writes back to it through six context actions. Understanding this system is the key to customizing or extending the portfolio.
+
+## Window lifecycle
+
+Windows are born and die inside `WindowContext`. The context maintains a `windows` array in React state. Each entry is a plain JavaScript object:
+
+```js
+{
+  id: 'about',
+  title: 'about_me.html',
+  component: <AboutComponent />,
+  icon: '👤',
+  state: 'open',       // 'open' | 'minimized' | 'maximized'
+  zIndex: 11,
+  width: 500,
+  height: 450,
+  defaultX: 80,
+  defaultY: 80
+}
+```
+
+The six context actions that change this object are:
+
+| Action | Effect |
+|--------|--------|
+| `openWindow(id, title, component, icon, { width, height })` | Appends a new window object. If the window already exists and is minimized, restores it instead. |
+| `closeWindow(id)` | Filters the window out of the array. Transfers focus to the highest remaining z-index window. |
+| `minimizeWindow(id)` | Sets `state: 'minimized'`. Clears `activeWindowId`. |
+| `maximizeWindow(id)` | Sets `state: 'maximized'`. Calls `focusWindow` internally. |
+| `restoreWindow(id)` | Sets `state: 'open'`. Calls `focusWindow` internally. |
+| `focusWindow(id)` | Increments the module-level z-index counter and sets it on the window. Sets `activeWindowId`. |
+
+## Window states
+
+A window object's `state` field controls how the `Window` component renders:
+
+- **`'minimized'`** — The `Window` component returns `null`. The window disappears from the desktop but its taskbar button remains. Clicking the button calls `restoreWindow`.
+- **`'open'`** — The window renders at its `defaultX` / `defaultY` position with its configured `width` and `height`. It is freely draggable.
+- **`'maximized'`** — The window fills the full viewport width and `calc(100% - 40px)` height (the 40 px accounts for the taskbar). Dragging is disabled; the Framer Motion `drag` prop is set to `false`.
+
+<Note>
+  Maximized windows use an inline `style` of `{ width: '100%', height: 'calc(100% - 40px)' }` and Tailwind classes `w-full h-full top-0 left-0` (via the `absolute` positioning of the `motion.div`). This means the 40 px taskbar at the bottom is always visible even when a window is maximized.
+</Note>
+
+## Framer Motion integration
+
+Each window is rendered as a `motion.div` (imported from Framer Motion v11 as the `Cc.div` factory). The drag lifecycle works like this:
+
+```js
+// Window.js (simplified)
+const dragControls = useDragControls(); // Framer Motion hook
+
+return (
+  <motion.div
+    drag={!isMaximized}          // dragging disabled when maximized
+    dragControls={dragControls}  // delegate drag start to title bar
+    dragListener={false}         // prevent motion.div from listening globally
+    dragMomentum={false}         // no inertia — windows stop where you drop them
+    initial={{ x: defaultX, y: defaultY, scale: 0.9, opacity: 0 }}
+    animate={{ scale: 1, opacity: 1 }}
+    onMouseDown={() => focusWindow(id)}
+    style={{ zIndex }}
+  >
+    {/* Title bar — this is where the drag actually starts */}
+    <div onPointerDown={(e) => { if (!isMaximized) dragControls.start(e); }}>
+      {/* window title, minimize / maximize / close buttons */}
+    </div>
+    {/* Window body */}
+  </motion.div>
+);
+```
+
+Key implementation details:
+
+- **`dragListener: false`** means Framer Motion will not start a drag from pointer events on the `motion.div` itself — the drag only starts when the title bar calls `dragControls.start(e)` via `onPointerDown`.
+- **`dragMomentum: false`** disables the inertia animation so windows stop precisely where you release them, consistent with native OS window behavior.
+- **`initial`** sets the spawn position using `defaultX` and `defaultY` from the window object, along with `scale: 0.9` and `opacity: 0` so each new window animates in smoothly.
+- When the window is maximized, `initial={false}` is passed instead, and `animate` targets `{ x: 0, y: 0, scale: 1, opacity: 1 }` to fill the viewport.
+
+## Title bar interactions
+
+The title bar handles three interactions:
+
+1. **`onPointerDown`** — Starts the drag via `dragControls.start(event)` (only when not maximized) and focuses the window.
+2. **`onDoubleClick`** — Toggles between maximize and restore: if currently maximized, calls `restoreWindow(id)`; otherwise calls `maximizeWindow(id)`.
+3. The three window-chrome buttons call `minimizeWindow`, `maximizeWindow`/`restoreWindow`, and `closeWindow` respectively, each with `event.stopPropagation()` to prevent the title-bar `onPointerDown` from firing as well.
+
+The active window's title bar uses the navy background (`bg-win-navy text-white`) while inactive windows use the dark gray (`bg-win-gray-dark text-win-gray-light`), driven by comparing the window's `id` against `activeWindowId` from context.
+
+## z-index management
+
+`WindowContext.js` declares a module-level variable `let zIndex = 10` outside any React component. Every call to `focusWindow(id)` executes:
+
+```js
+zIndex += 1;
+// then updates the matching window object with the new zIndex value
+```
+
+Because the variable lives at module scope it persists across re-renders and across calls to any of the context actions. The result is a simple monotonically increasing counter: each newly focused window gets a higher z-index than every other window, so the most recently touched window is always on top. New windows created by `openWindow` also increment `zIndex` and apply it immediately.
+
+## Default positioning (cascade)
+
+When `openWindow` creates a new window object it calculates the initial position based on how many windows are already open:
+
+```js
+defaultX: (options?.defaultX) || 50 + windows.length * 30,
+defaultY: (options?.defaultY) || 50 + windows.length * 30,
+```
+
+The `50 + windows.length * 30` formula cascades each new window 30 px further down and to the right than the previous one, replicating the classic Windows cascade behavior. Custom `defaultX` / `defaultY` values passed via the `options` argument (e.g., from a programmatic `openWindow` call) override this calculation.
+
+## Default window dimensions
+
+`openWindow` falls back to 600 × 400 px if no dimensions are provided:
+
+```js
+width:  (options?.width)  || 600,
+height: (options?.height) || 400,
+```
+
+The nine built-in apps all supply explicit `width` and `height` values in `config/apps.js`, ranging from 450 × 500 (the contact guestbook) to 800 × 600 (the projects explorer).
+
+## WebRing navigation bar
+
+Each window's status bar at the bottom contains three buttons — **`< Prev`**, **`Random`**, and **`Next >`** — that implement a WebRing-style navigation. They use `apps.findIndex` to locate the current window in the `apps` array, then compute the adjacent or random index:
+
+```js
+// "< Prev" button
+const currentIndex = apps.findIndex(app => app.id === id);
+const prevApp = apps[(currentIndex - 1 + apps.length) % apps.length];
+closeWindow(id);
+openWindow(prevApp.id, prevApp.title, <prevApp.component />, prevApp.icon,
+  { width: prevApp.width, height: prevApp.height });
+
+// "Random" button
+const randomApp = apps[Math.floor(Math.random() * apps.length)];
+closeWindow(id);
+openWindow(randomApp.id, ...);
+
+// "Next >" button
+const nextApp = apps[(currentIndex + 1) % apps.length];
+closeWindow(id);
+openWindow(nextApp.id, ...);
+```
+
+The current window is closed before the new one opens, so only one window is ever active during navigation. The status bar also displays the static label **"WebRing Navigation"** on its right side.

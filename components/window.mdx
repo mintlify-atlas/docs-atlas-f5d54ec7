@@ -1,0 +1,131 @@
+---
+title: "Window Component: Draggable Win98 Window Shell"
+sidebarTitle: "Window"
+description: "Window renders a Win98 frame with a draggable title bar, minimize/maximize/close buttons, a Framer Motion scale-in animation, and a WebRing navigation bar."
+---
+
+The `Window` component is the visual and interactive shell for every application in Old Windows. It wraps any arbitrary React content in an authentic Windows 98–style frame complete with a navy active-title-bar, Framer Motion drag, animated open transitions, and a WebRing navigation status bar. Desktop creates one `Window` per entry in the `windows` state array.
+
+## The `windowData` Prop
+
+`Window` accepts a single `windowData` prop — a plain object shaped by `WindowContext` and passed straight from the `windows` state array.
+
+<ParamField path="id" type="string" required>
+  Unique identifier for the window. Used as the React `key`, and passed to every window management action (`closeWindow`, `focusWindow`, etc.).
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  Text displayed in the title bar and on the corresponding Taskbar button.
+</ParamField>
+
+<ParamField path="component" type="ReactNode" required>
+  The content rendered inside the window body. `Desktop` constructs this as `<app.component />` before calling `openWindow`.
+</ParamField>
+
+<ParamField path="icon" type="ReactNode" required>
+  Emoji or node shown to the left of the title in both the title bar and the Taskbar button.
+</ParamField>
+
+<ParamField path="state" type="'open' | 'minimized' | 'maximized'" required>
+  Current lifecycle state. The component returns `null` immediately when `state === 'minimized'`, removing it from the DOM.
+</ParamField>
+
+<ParamField path="zIndex" type="number" required>
+  CSS stacking order. Incremented globally by `focusWindow` each time a window is brought to front.
+</ParamField>
+
+<ParamField path="width" type="number">
+  Initial width in pixels. Applied as an inline style on the motion container. Defaults to `600` if omitted via `openWindow`.
+</ParamField>
+
+<ParamField path="height" type="number">
+  Initial height in pixels. Applied as an inline style on the motion container. Defaults to `400` if omitted via `openWindow`.
+</ParamField>
+
+<ParamField path="defaultX" type="number">
+  Initial horizontal offset from the left edge of the desktop in pixels. Used as the Framer Motion `x` drag origin.
+</ParamField>
+
+<ParamField path="defaultY" type="number">
+  Initial vertical offset from the top edge of the desktop in pixels. Used as the Framer Motion `y` drag origin.
+</ParamField>
+
+## Behavior
+
+### Minimized State
+
+When `state === 'minimized'`, `Window` returns `null` immediately. The window disappears from the desktop but remains in the `windows` array so its Taskbar button stays visible. Clicking the Taskbar button calls `restoreWindow`, which sets `state` back to `'open'`.
+
+### Maximized State
+
+When `state === 'maximized'`, the window fills the full viewport width and `calc(100% - 40px)` height (leaving room for the Taskbar). It is pinned to `top-0 left-0` via inline styles, and Framer Motion drag is disabled.
+
+### Title Bar Styles
+
+| Condition | Title Bar Class |
+|-----------|----------------|
+| This window is the active window | `bg-win-navy text-white` |
+| Any other window | `bg-win-gray-dark text-win-gray-light` |
+
+Clicking anywhere on a window calls `focusWindow(id)` to bring it to front and apply the active style.
+
+### Drag
+
+Dragging is powered by Framer Motion's `drag` and `dragControls` props. `dragControls.start(event)` is called from an `onPointerDown` handler attached to the title bar, so only the title bar initiates a drag. Drag is disabled (`drag={false}`) when `state === 'maximized'`.
+
+### Open Animation
+
+On mount, each window animates from `{ scale: 0.9, opacity: 0 }` to `{ scale: 1, opacity: 1 }` using Framer Motion's `initial` / `animate` props, giving it a snappy pop-in effect.
+
+### Double-click Title Bar
+
+Double-clicking the title bar toggles between `'maximized'` and `'open'` states via `maximizeWindow` / `restoreWindow`.
+
+## Title Bar Buttons
+
+<Steps>
+  <Step title="Minimize">
+    Renders a horizontal bar SVG inside a `win-border-outset` button. Calls `minimizeWindow(id)`, setting `state` to `'minimized'` and removing the window from the DOM.
+  </Step>
+  <Step title="Maximize / Restore">
+    Renders a single-square SVG when `state === 'open'` (maximize), or a dual-overlapping-square SVG when `state === 'maximized'` (restore). Calls `maximizeWindow(id)` or `restoreWindow(id)` accordingly.
+  </Step>
+  <Step title="Close">
+    Renders an X SVG. Calls `closeWindow(id)`, which removes the window object from the `windows` array entirely.
+  </Step>
+</Steps>
+
+## WebRing Status Bar
+
+A fixed status bar sits at the bottom of every window body. It contains three equally styled `win-border-outset` buttons that navigate between apps using the global `apps` config array:
+
+| Button | Behavior |
+|--------|----------|
+| **Prev** | Opens the previous app in the `apps` array (wraps around) |
+| **Random** | Opens a randomly selected app |
+| **Next** | Opens the next app in the `apps` array (wraps around) |
+
+Clicking any WebRing button calls `openWindow` with the target app's config, simulating a classic late-90s WebRing navigation experience.
+
+## Example
+
+The following is how `Desktop` constructs a `windowData` object and passes it to `Window`:
+
+```jsx
+<Window windowData={{
+  id: 'about',
+  title: 'about_me.html',
+  component: <AboutComponent />,
+  icon: '👤',
+  state: 'open',
+  zIndex: 11,
+  width: 500,
+  height: 450,
+  defaultX: 80,
+  defaultY: 80
+}} />
+```
+
+<Tip>
+  You do not construct `windowData` objects manually in practice. Call `openWindow()` from `useWindows()` and the `WindowProvider` creates the object and adds it to the `windows` array automatically.
+</Tip>

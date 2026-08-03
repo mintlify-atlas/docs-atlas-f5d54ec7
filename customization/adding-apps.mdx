@@ -1,0 +1,120 @@
+---
+title: "Add Your Own App Windows to Old Windows"
+sidebarTitle: "Adding Apps"
+description: "Step-by-step guide to registering a new window in config/apps.js — covering the app entry shape, icon choices, initial sizing, and WebRing ordering."
+---
+
+Every window on the Old Windows desktop — the About section, Work History, Projects viewer, and all others — is registered as an entry in the `apps` array exported from `config/apps.js`. Adding a new window is a matter of writing a React component and appending one object to that array. The desktop, Start menu, taskbar, and WebRing navigation all read from the same config, so your new window appears everywhere automatically the moment you save the file.
+
+## Adding a New App
+
+<Steps>
+  <Step title="Create your app component">
+    Write a React component for the window's content. The component renders inside the window's content area — you do not need to handle the title bar, close button, or drag behavior yourself; the `Window` shell wraps your component automatically.
+
+    ```jsx
+    // You can define this inline in config/apps.js for small components,
+    // or create a dedicated file such as src/components/apps/Resume.jsx.
+
+    const ResumeComponent = () => (
+      <div className="h-full p-6 bg-white font-pixel text-sm overflow-auto">
+        <h1 className="text-2xl font-bold mb-4 text-win-navy">Resume.pdf</h1>
+        <p className="font-serif text-base leading-relaxed">
+          Your resume content here — work experience, education, skills.
+        </p>
+      </div>
+    )
+    ```
+
+    Keep the root element `h-full` so the content fills the window's available height without overflowing the chrome.
+  </Step>
+
+  <Step title="Open config/apps.js">
+    The file exports a single `apps` array. Each existing entry follows the same object shape — locate the array and scroll to its end to add your new entry.
+
+    ```js
+    // config/apps.js (excerpt showing the existing array structure)
+    const apps = [
+      {
+        id: 'about',
+        title: 'about.exe',
+        icon: <span>👤</span>,
+        component: AboutComponent,
+        width: 560,
+        height: 420,
+      },
+      // ... remaining existing apps ...
+    ]
+    ```
+  </Step>
+
+  <Step title="Append your entry to the apps array">
+    Add the new object at the end of the array (or at any position — see the note on ordering below):
+
+    ```js
+    // config/apps.js — complete example entry
+    const apps = [
+      // ... existing apps ...
+      {
+        id: 'resume',
+        title: 'Resume.pdf',
+        icon: <span>📄</span>,
+        component: ResumeComponent,
+        width: 600,
+        height: 500,
+      },
+    ]
+    ```
+
+    Save the file. Vite's hot module replacement will refresh the desktop immediately in the browser.
+  </Step>
+
+  <Step title="Verify it appears everywhere">
+    After saving, confirm your new window is wired up in all four places:
+
+    - **Desktop** — a new icon with your `icon` JSX and `title` label appears in the icon grid.
+    - **Start menu** — the title appears in the Programs list inside the Start menu.
+    - **Taskbar** — when the window is open, a button showing `title` appears in the taskbar.
+    - **WebRing** — the Prev / Random / Next navigation in the window status bar cycles through your app along with all others.
+  </Step>
+</Steps>
+
+## App Entry Reference
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Unique identifier for this window. Used as the React key and by `openWindow` / `closeWindow` / `focusWindow`. Must not collide with any other app's `id`. |
+| `title` | `string` | Display name shown in the title bar, taskbar button, Start menu, and desktop icon label. |
+| `icon` | `JSX.Element` | Icon rendered on the desktop and in the title bar. Emoji `<span>` elements work best at the sizes used. |
+| `component` | `React.ComponentType` | The component rendered inside the window's content area. |
+| `width` | `number` | Initial window width in pixels. |
+| `height` | `number` | Initial window height in pixels. |
+
+## Window Sizing
+
+The `width` and `height` values set the initial dimensions when the window is first opened. Users can minimize or maximize a window, but they cannot resize it by dragging its edges — there is no resize handle in the current implementation. Choose dimensions that comfortably fit the content without requiring scrolling for the most common viewport size (1280 × 800 and above).
+
+## Icon Guidelines
+
+The `icon` field accepts any valid JSX. Emoji `<span>` elements are the most straightforward choice because they render consistently without any additional dependencies and scale gracefully with the surrounding font size:
+
+```jsx
+icon: <span>📄</span>   // document
+icon: <span>🎮</span>   // game / interactive app
+icon: <span>📬</span>   // contact / mail
+icon: <span>🗂️</span>  // file manager style
+```
+
+The same icon JSX is used on the desktop grid and inside the window title bar, so pick something that reads well at 16–20 px.
+
+## WebRing Navigation
+
+Each window includes a status bar at the bottom with **Prev**, **Random**, and **Next** buttons. These buttons navigate through the `apps` array in order, closing the current window and opening the adjacent one. Your new app is automatically included in this cycle — no additional wiring is needed.
+
+<Tip>
+  Name your `title` values in the style of file system entries — `'resume.pdf'`, `'contact.html'`, `'projects.exe'`, `'blog.txt'`. This convention appears throughout the existing apps and is a small detail that goes a long way toward maintaining the Windows 98 illusion.
+</Tip>
+
+<Note>
+  The position of your entry in the `apps` array controls two things: the left-to-right, top-to-bottom order of icons on the desktop grid, and the sequence of Prev / Next WebRing navigation. Place your most important windows early in the array so they appear prominently on the desktop.
+</Note>

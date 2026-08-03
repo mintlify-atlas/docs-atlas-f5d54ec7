@@ -1,0 +1,141 @@
+---
+title: "About Window: Retro-Style Developer Bio Page"
+sidebarTitle: "About"
+description: "A warm yellow-background biographical window with a serif font, float-left avatar placeholder, bio paragraphs, and a WebRing membership badge."
+---
+
+The About window (`about_me.html`) presents your developer biography in the style of a hand-crafted late-90s personal webpage. It uses a warm `#ffffe0` (pale yellow) background and a serif font to evoke the feeling of a printed page, floating a cyan avatar box to the left of three paragraphs of biographical text. A WebRing badge sits at the very bottom, complete with Prev / Random / Next navigation buttons.
+
+## Visual Design
+
+The window draws on classic web publishing conventions rather than the terminal aesthetic used by the Home window:
+
+- **Background** — `bg-[#ffffe0]`, the classic "light yellow" page colour
+- **Typography** — `font-serif` body text with a `font-pixel` heading, giving it a handmade zine quality
+- **Avatar placeholder** — a `128×128` `bg-win-cyan` box with the `👨‍💻` emoji centred inside, floated left via `float-left mr-6 mb-4` so text wraps naturally around it
+- **Heading underline** — a solid `border-b-2 border-black` rule below the "About Me" title
+- **WebRing badge** — a dashed-border footer section with three inline `<button>` elements styled as blue underlined links
+
+## Features
+
+<Steps>
+  <Step title="Float-wrap biography layout">
+    The avatar sits inside a `win-border-outset` inset box floated to the left. The three bio paragraphs flow around it using standard CSS float behaviour — no flexbox or grid required, just like 1999.
+  </Step>
+  <Step title="Three biography paragraphs">
+    Each paragraph uses `text-lg leading-relaxed` for comfortable readability. They cover your origin story, current specialisation, and a personal fun-fact or hobby to add personality.
+  </Step>
+  <Step title="WebRing membership badge">
+    The bottom section is separated by a `border-t-2 border-dashed border-gray-400` rule. The three WebRing buttons (`[< Prev]`, `[Random]`, `[Next >]`) are plain `<button>` elements — wire them up to real URLs if you want a functional ring.
+  </Step>
+</Steps>
+
+## Customization
+
+<Steps>
+  <Step title="Replace the avatar placeholder">
+    The avatar is a coloured `<div>` with an emoji. Swap the emoji for an `<img>` tag pointing to a real photo, keeping the same outer wrapper dimensions (`w-32 h-32`):
+
+    ```jsx
+    {/* Before */}
+    <div className="w-32 h-32 bg-win-cyan flex items-center justify-center border border-black">
+      <span className="text-4xl">👨‍💻</span>
+    </div>
+
+    {/* After — real photo */}
+    <img src="/avatar.png" alt="Your name"
+         className="w-32 h-32 object-cover border border-black" />
+    ```
+  </Step>
+  <Step title="Edit the bio paragraphs">
+    Find the three `<p className="mb-4 text-lg leading-relaxed">` elements inside `AboutComponent` and replace the text with your own story:
+
+    ```jsx
+    <p className="mb-4 text-lg leading-relaxed">
+      Greetings, fellow netizen! I am a passionate web developer who remembers
+      when the internet was a wild, untamed frontier of MIDI background music
+      and table-based layouts.
+    </p>
+    <p className="mb-4 text-lg leading-relaxed">
+      While my tools have evolved from Notepad and FTP to React and CI/CD
+      pipelines, my love for crafting digital experiences remains unchanged.
+    </p>
+    <p className="mb-4 text-lg leading-relaxed">
+      When I'm not coding, you can find me curating my collection of rare
+      animated GIFs, optimizing my autoexec.bat, or arguing about tabs vs.
+      spaces on Usenet.
+    </p>
+    ```
+  </Step>
+  <Step title="Wire up the WebRing buttons">
+    The three WebRing buttons currently have no `onClick` handlers. Add `href` links or `onClick` callbacks pointing to your actual ring neighbours:
+
+    ```jsx
+    <button onClick={() => window.open('https://webring.example.com/prev', '_blank')}
+            className="hover:text-blue-500">
+      [&lt; Prev]
+    </button>
+    ```
+  </Step>
+  <Step title="Change the window size">
+    The About app defaults to `width: 500, height: 450` in the `apps` array at the bottom of `config/apps.js`. Increase the height if your bio text is longer:
+
+    ```js
+    { id: 'about', title: 'about_me.html', icon: <span>👤</span>,
+      component: AboutComponent, width: 500, height: 450 }
+    ```
+  </Step>
+</Steps>
+
+## Core component snippet
+
+```jsx
+const AboutComponent = () => (
+  <div className="h-full bg-[#ffffe0] text-black font-serif p-8
+                  overflow-auto flex flex-col">
+    <h1 className="text-3xl font-bold mb-6 border-b-2 border-black pb-2 font-pixel">
+      About Me
+    </h1>
+
+    <div className="flex-1">
+      {/* Float-left avatar */}
+      <div className="float-left mr-6 mb-4 win-border-outset p-1 bg-win-gray">
+        <div className="w-32 h-32 bg-win-cyan flex items-center
+                        justify-center border border-black">
+          <span className="text-4xl">👨‍💻</span>
+        </div>
+      </div>
+
+      <p className="mb-4 text-lg leading-relaxed">
+        Greetings, fellow netizen! I am a passionate web developer who remembers
+        when the internet was a wild, untamed frontier…
+      </p>
+      <p className="mb-4 text-lg leading-relaxed">
+        While my tools have evolved from Notepad and FTP to React and CI/CD
+        pipelines, my love for crafting digital experiences remains unchanged.
+      </p>
+      <p className="mb-4 text-lg leading-relaxed">
+        When I'm not coding, you can find me curating my collection of rare
+        animated GIFs…
+      </p>
+    </div>
+
+    {/* WebRing badge */}
+    <div className="mt-8 pt-4 border-t-2 border-dashed border-gray-400 text-center">
+      <p className="font-pixel text-sm mb-2">
+        This site is a proud member of the Web Developers Ring
+      </p>
+      <div className="flex justify-center gap-4 font-pixel text-sm
+                      text-blue-800 underline">
+        <button className="hover:text-blue-500">[&lt; Prev]</button>
+        <button className="hover:text-blue-500">[Random]</button>
+        <button className="hover:text-blue-500">[Next &gt;]</button>
+      </div>
+    </div>
+  </div>
+);
+```
+
+<Tip>
+  The float-left layout works because the bio `<div>` uses `flex-1` and contains block-level `<p>` elements. If you add more content sections after the bio (e.g. a skills list), make sure to add a `clear-both` div first so they don't overlap the floated avatar.
+</Tip>

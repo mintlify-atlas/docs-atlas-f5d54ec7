@@ -1,0 +1,172 @@
+---
+title: "Work History Window: Notepad Typewriter Animation"
+sidebarTitle: "Work History"
+description: "A Notepad clone that animates your work history text one character at a time with a 15ms typewriter effect and a blinking cursor at the end."
+---
+
+The Work History window (`work_history.txt`) is a faithful Notepad clone that plays your career history as a typewriter animation. When the window opens, a `setInterval` loop appends one character every 15 milliseconds to the displayed text, gradually revealing the full content as if someone is typing it live. A pulsing black cursor blinks at the end of the text throughout.
+
+## Visual Design
+
+The component is intentionally spartan — matching the plain white Notepad aesthetic of Windows 98:
+
+- **Menu bar** — `win-border-outset bg-win-gray` strip with **File**, **Edit**, **Search**, and **Help** labels in `font-pixel`. None of the menus open; they are purely decorative chrome.
+- **Text area** — `font-mono text-sm whitespace-pre-wrap overflow-auto bg-white text-black` fills the remaining window height. The `whitespace-pre-wrap` rule is essential — it preserves the indentation and blank lines in the pre-formatted work history string.
+- **Blinking cursor** — an `<span>` with `inline-block w-2 h-4 bg-black animate-pulse align-middle ml-0.5` that sits immediately after the last typed character. `animate-pulse` from Tailwind creates the blink effect.
+
+## Features
+
+<Steps>
+  <Step title="Typewriter animation">
+    A `useEffect` starts a `setInterval` on mount. Each tick increments a counter and calls `setText(workHistoryText.substring(0, counter))`, slicing one more character from the source string. The interval clears itself when the counter exceeds the string length.
+  </Step>
+  <Step title="Blinking cursor">
+    The cursor `<span>` is always rendered directly after the animated text slice — it appears to "follow" the typing and then blink indefinitely once typing is complete.
+  </Step>
+  <Step title="Pre-formatted plain text">
+    The source text uses spaces, `>` prompt characters, and dashes to create visual structure inside a monospace font. No HTML or markdown — just a plain template-literal string.
+  </Step>
+</Steps>
+
+## Work history text
+
+The entire content is stored in a single template-literal string called `workHistoryText`, defined just above `WorkHistoryComponent` in `config/apps.js`:
+
+```js
+const workHistoryText = `WORK HISTORY
+=========================================
+
+> Senior Frontend Engineer @ TechCorp
+  [2021 - Present]
+  - Led migration from legacy jQuery to React
+  - Reduced bundle size by 40%
+  - Mentored junior devs on the art of CSS
+
+> Web Developer @ Startup.io
+  [2018 - 2021]
+  - Built responsive landing pages
+  - Integrated 3rd party APIs
+  - Survived 3 pivots and a rebrand
+
+> Junior Webmaster @ Local Business
+  [2015 - 2018]
+  - Managed WordPress themes
+  - Updated the marquee tag on the homepage
+  - Fixed the printer when it jammed
+
+=========================================
+EOF`;
+```
+
+The typewriter animation plays through every character in this string in order, including whitespace and newlines.
+
+## Customization
+
+<Steps>
+  <Step title="Replace the work history text">
+    Find the `workHistoryText` template-literal string in `config/apps.js` and replace its contents with your own career history. Use the same `>` / `[date]` / `- bullet` convention for consistent visual formatting, or invent your own:
+
+    ```js
+    const workHistoryText = `WORK HISTORY
+    =========================================
+
+    > Staff Engineer @ BigCo
+      [2022 - Present]
+      - Architected micro-frontend platform
+      - Reduced CI build time from 18min to 4min
+
+    > Frontend Lead @ ScaleUp Inc.
+      [2019 - 2022]
+      - Shipped React Native app to 200k users
+      - Hired and grew a team of 5 engineers
+
+    =========================================
+    EOF`;
+    ```
+  </Step>
+  <Step title="Adjust the typing speed">
+    The interval delay is hardcoded to `15` (milliseconds per character). Find the `setInterval` call in the `useEffect` and change it:
+
+    ```js
+    // Slower — 30ms per character
+    const timer = setInterval(() => { … }, 30);
+
+    // Faster — 5ms per character
+    const timer = setInterval(() => { … }, 5);
+    ```
+
+    At 15ms, a 500-character history takes about 7.5 seconds to type out.
+  </Step>
+  <Step title="Skip the animation entirely">
+    If you prefer the text to appear instantly (e.g. for accessibility), replace the animated state with the static string:
+
+    ```jsx
+    // Replace the useState + useEffect block with:
+    const text = workHistoryText;
+    ```
+
+    Then render `{text}` instead of `{displayedText}` in the JSX.
+  </Step>
+  <Step title="Resize the window">
+    The Work History app defaults to `width: 550, height: 500`. Increase the height for longer histories:
+
+    ```js
+    { id: 'work', title: 'work_history.txt', icon: <span>📝</span>,
+      component: WorkHistoryComponent, width: 550, height: 600 }
+    ```
+  </Step>
+</Steps>
+
+## Core component snippet
+
+```jsx
+const workHistoryText = `WORK HISTORY
+=========================================
+
+> Senior Frontend Engineer @ TechCorp
+  [2021 - Present]
+  - Led migration from legacy jQuery to React
+  - Reduced bundle size by 40%
+…
+EOF`;
+
+const WorkHistoryComponent = () => {
+  const [displayedText, setDisplayedText] = React.useState('');
+
+  React.useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      setDisplayedText(workHistoryText.substring(0, i));
+      i++;
+      if (i > workHistoryText.length) clearInterval(timer);
+    }, 15); // ← change this number to adjust typing speed
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      {/* Menu bar */}
+      <div className="win-border-outset bg-win-gray px-1 py-0.5 flex gap-3
+                      text-sm font-pixel">
+        <span className="hover:bg-win-navy hover:text-white px-1 cursor-pointer">File</span>
+        <span className="hover:bg-win-navy hover:text-white px-1 cursor-pointer">Edit</span>
+        <span className="hover:bg-win-navy hover:text-white px-1 cursor-pointer">Search</span>
+        <span className="hover:bg-win-navy hover:text-white px-1 cursor-pointer">Help</span>
+      </div>
+
+      {/* Text area */}
+      <div className="flex-1 p-2 font-mono text-sm whitespace-pre-wrap
+                      overflow-auto bg-white text-black">
+        {displayedText}
+        {/* Blinking cursor */}
+        <span className="inline-block w-2 h-4 bg-black animate-pulse
+                         align-middle ml-0.5" />
+      </div>
+    </div>
+  );
+};
+```
+
+<Note>
+  The `useEffect` cleanup function (`return () => clearInterval(timer)`) is important. Without it, navigating away from the window and re-opening it would start a second interval, causing the animation to double-speed or corrupt the displayed text.
+</Note>

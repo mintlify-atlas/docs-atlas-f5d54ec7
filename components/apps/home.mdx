@@ -1,0 +1,138 @@
+---
+title: "Home Window: Green-on-Black Terminal Welcome Page"
+sidebarTitle: "Home"
+description: "The green-on-black terminal home screen greets visitors with a blinking welcome header, animated under-construction SVG, visitor counter, and intro text."
+---
+
+The Home window (`index.html`) is the first thing visitors see when they open your portfolio. It renders a full green-on-black CRT terminal aesthetic — `#00ff00` text on a pure black background — channeling the spirit of a 1990s personal homepage complete with blinking headers, a dotted scanline overlay, and an animated construction crane SVG.
+
+## Visual Design
+
+The window uses the `font-vt323` monospace typeface and a radial-dot background overlay (`opacity-20`) to simulate the phosphor glow of an old monitor. Key visual elements include:
+
+- **Blinking `WELCOME TO MY HOMEPAGE!` heading** — a large `text-4xl md:text-6xl` header with the `blink` CSS class
+- **Dashed green border info box** — a `border-dashed border-[#00ff00]` container holding the intro text and the "BEST VIEWED IN NETSCAPE NAVIGATOR 4.0" warning in `text-yellow-400`
+- **Animated construction SVG** — an inline SVG of a construction barrier and crane arm with an `<animateTransform>` element that rocks the arm back and forth on a 2-second loop
+- **Footer strip** — a full-width bar pinned to the bottom with `mt-auto`, showing the last-updated date (live from `new Date().toLocaleDateString()`) and the hardcoded visitor counter `001337`
+
+## Features
+
+<Steps>
+  <Step title="Blinking welcome header">
+    The `<h1>` carries the `blink` CSS class, which is defined globally in `main.css` to toggle `opacity` on a CSS animation. This is purely decorative and intentional retro cheese.
+  </Step>
+  <Step title="Intro text box">
+    A dashed-border box holds two paragraphs: your developer tagline and the tongue-in-cheek browser compatibility notice. The tagline is plain inline text inside a `<p>` element.
+  </Step>
+  <Step title="Under-construction animation">
+    An inline SVG renders a yellow road barrier with diagonal stripes and a pivoting crane arm. The arm animates via SVG's native `<animateTransform>` — no JavaScript or Framer Motion involved.
+  </Step>
+  <Step title="Visitor counter">
+    The footer displays a static counter badge (`001337`) styled like an old odometer — white text on black with a grey border. It is hardcoded and purely cosmetic.
+  </Step>
+  <Step title="Live last-updated date">
+    The footer also calls `new Date().toLocaleDateString()` at render time, so the date always reflects today automatically.
+  </Step>
+</Steps>
+
+## Customization
+
+All content lives in the `HomeComponent` function inside `config/apps.js`. To make it yours:
+
+<Steps>
+  <Step title="Change the intro paragraphs">
+    Find the dashed-border `<div>` and edit the two `<p>` elements — your tagline and the browser notice:
+
+    ```jsx
+    <p className="text-xl mb-4">
+      Hi, I'm a Senior Developer building the future of the World Wide Web.
+    </p>
+    <p className="text-lg text-yellow-400">
+      BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 AT 800x600 RESOLUTION
+    </p>
+    ```
+
+    Replace the first `<p>` with your own intro line. Keep the second one for maximum retro effect, or swap it for a real tech stack callout.
+  </Step>
+  <Step title="Update the visitor counter">
+    The counter number is hardcoded as the string `"001337"`. Change it to whatever number you like:
+
+    ```jsx
+    <span className="font-bold text-white bg-black px-1 border border-gray-600">
+      001337
+    </span>
+    ```
+  </Step>
+  <Step title="Adjust the window dimensions">
+    The Home app is registered in the `apps` array at the bottom of `config/apps.js` with `width: 700, height: 500`. Change those values to resize the default window:
+
+    ```js
+    { id: 'home', title: 'index.html', icon: <span>🏠</span>,
+      component: HomeComponent, width: 700, height: 500 }
+    ```
+  </Step>
+</Steps>
+
+## Core component snippet
+
+```jsx
+const HomeComponent = () => (
+  <div className="h-full bg-black text-[#00ff00] font-vt323 p-6 overflow-auto
+                  flex flex-col items-center text-center relative">
+    {/* Scanline dot overlay */}
+    <div className="absolute inset-0 opacity-20 pointer-events-none"
+      style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)',
+               backgroundSize: '50px 50px' }} />
+
+    <h1 className="text-4xl md:text-6xl mb-4 blink font-bold tracking-widest mt-8">
+      WELCOME TO MY HOMEPAGE!
+    </h1>
+
+    {/* Intro box */}
+    <div className="my-8 border-4 border-dashed border-[#00ff00] p-4 max-w-lg bg-black z-10">
+      <p className="text-xl mb-4">
+        Hi, I'm a Senior Developer building the future of the World Wide Web.
+      </p>
+      <p className="text-lg text-yellow-400">
+        BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 AT 800x600 RESOLUTION
+      </p>
+    </div>
+
+    {/* Under-construction SVG + label */}
+    <div className="my-8 flex flex-col items-center">
+      <svg width="200" height="100" viewBox="0 0 200 100"
+           xmlns="http://www.w3.org/2000/svg" className="mb-2">
+        {/* barrier stripes */}
+        <rect x="20" y="60" width="160" height="20" fill="#ffcc00"
+              stroke="black" strokeWidth="2" />
+        <path d="M40 60 L60 80 M80 60 L100 80 M120 60 L140 80 M160 60 L180 80"
+              stroke="black" strokeWidth="4" />
+        {/* rocking crane arm */}
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="0 100 60; -20 100 60; 0 100 60" dur="2s"
+            repeatCount="indefinite" />
+          <rect x="90" y="20" width="10" height="40" fill="#ff9900"
+                stroke="black" strokeWidth="2" />
+        </g>
+      </svg>
+      <p className="text-xl font-bold text-red-500 blink">FOREVER UNDER CONSTRUCTION</p>
+    </div>
+
+    {/* Footer strip */}
+    <div className="mt-auto pt-8 w-full border-t border-[#00ff00]
+                    flex justify-between text-sm">
+      <span>Last updated: {new Date().toLocaleDateString()}</span>
+      <span>You are visitor #
+        <span className="font-bold text-white bg-black px-1 border border-gray-600">
+          001337
+        </span>
+      </span>
+    </div>
+  </div>
+);
+```
+
+<Note>
+  The `blink` class is defined in `assets/main.css` as a CSS keyframe animation. If you remove that stylesheet, the blinking headers will stop animating but the page will otherwise render correctly.
+</Note>

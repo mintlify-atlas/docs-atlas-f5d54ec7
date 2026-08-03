@@ -1,0 +1,76 @@
+{
+  "projectType": "frontend",
+  "projectName": "Old Windows",
+  "projectDescription": "A retro Windows 98-style personal portfolio built with React, featuring a fully interactive desktop environment with draggable/resizable windows, a Start menu, taskbar, and themed app windows for showcasing developer work.",
+  "theme": "almond",
+  "primaryColor": "#000080",
+  "lightColor": "#c0c0c0",
+  "darkColor": "#000040",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "getting-started"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/window-system", "architecture/app-config"]
+          }
+        ]
+      },
+      {
+        "tab": "Components",
+        "groups": [
+          {
+            "group": "Core Components",
+            "pages": ["components/desktop", "components/window", "components/taskbar", "components/window-context"]
+          },
+          {
+            "group": "App Windows",
+            "pages": ["components/apps/home", "components/apps/about", "components/apps/projects", "components/apps/skills", "components/apps/work", "components/apps/blog"]
+          }
+        ]
+      },
+      {
+        "tab": "Customization",
+        "groups": [
+          {
+            "group": "Theming & Styling",
+            "pages": ["customization/theme", "customization/css-classes", "customization/fonts"]
+          },
+          {
+            "group": "Extending",
+            "pages": ["customization/adding-apps", "customization/crt-effects"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Windows 98-style desktop environment rendered entirely in React",
+    "Draggable, resizable, minimizable, and maximizable windows using Framer Motion",
+    "Start menu with app launcher and 'Shut Down' button",
+    "Taskbar with live clock, active window buttons, and minimize/restore support",
+    "CRT scanline and flicker overlay for authentic retro feel",
+    "Animated visitor counter with LED-style digit display",
+    "WebRing-style in-window navigation (Prev / Random / Next)",
+    "Nine themed app windows: Home, About, Projects, Skills, Work History, Case Studies, Blog, Contact (Guestbook), and Testimonials",
+    "Pixel fonts (Pixelify Sans, VT323) and Win98 CSS border utilities",
+    "Built with Vite + React + Tailwind CSS + Framer Motion"
+  ],
+  "publicApiSurface": [
+    "WindowProvider — context provider wrapping the entire app",
+    "useWindows() — hook: { windows, openWindow, closeWindow, minimizeWindow, maximizeWindow, restoreWindow, focusWindow, activeWindowId }",
+    "openWindow(id, title, component, icon, { width, height, defaultX, defaultY })",
+    "apps[] — array of app config objects in config/apps.js: { id, title, icon, component, width, height }",
+    "Desktop component — renders desktop icons, open windows, visitor counter, taskbar, and CRT overlay",
+    "Window component — renders a single managed window with title bar controls",
+    "Taskbar component — renders Start button, window buttons, and system clock",
+    ".win-border-outset / .win-border-inset / .win-border-window — CSS utility classes for Win98 border effect",
+    ".crt-overlay / .crt-flicker — CSS classes for CRT screen effect",
+    ".font-pixel / .font-vt323 — Tailwind font utility classes"
+  ]
+}

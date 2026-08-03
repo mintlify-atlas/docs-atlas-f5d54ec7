@@ -1,0 +1,181 @@
+---
+title: "Blog Window: Cyan Terminal Post Index and Reader"
+sidebarTitle: "Blog"
+description: "A cyan-on-black terminal blog index listing posts in a two-column table; clicking any post opens a blue (#000080) detail view with a back button."
+---
+
+The Blog window (`~/blog`) has two distinct visual modes that swap based on which post is selected. The **index** view renders a cyan-on-black terminal listing of all posts with title and date columns, giving it the feel of a Unix `ls -l` output. Clicking any post transitions to the **post detail** view — a `#000080` (classic Windows navy) background with white serif text and a yellow `[ < Back to Index ]` link at the top.
+
+## Visual Design
+
+### Index view
+
+The index uses `bg-black text-[#00ffff] font-pixel` — cyan text on black, the classic terminal palette:
+
+- **Header box** — a `border-4 border-double border-[#00ffff]` double-rule box centred at the top containing the `~/blog` title and a subtitle
+- **Column headings** — `border-b border-[#00ffff] pb-2 mb-2 font-bold text-yellow-400` to separate "Title" and "Date" in gold
+- **Post rows** — each row is a flex container with `justify-between`. Hovering applies `hover:bg-[#00ffff] hover:text-[#000080]` — the text inverts to navy-on-cyan, matching the Win98 selection highlight
+- **Footer tagline** — a small `text-gray-500` line at the bottom: *"Best viewed with an open mind."*
+
+### Post detail view
+
+Clicking a post sets `selectedId` in React state and switches the entire window to `bg-[#000080] text-white p-6 font-serif overflow-auto`:
+
+- **Back button** — `text-yellow-400 hover:underline font-pixel text-sm` link at the top: `[ < Back to Index ]`
+- **Post title** — `text-3xl font-bold mb-2`
+- **Date line** — `text-sm text-gray-300 font-pixel`
+- **Body text** — `text-lg leading-relaxed space-y-4` with multiple `<p>` elements
+
+## Features
+
+<Steps>
+  <Step title="Post index table">
+    The index renders a `flex flex-col gap-2` list. Each row is a `flex justify-between` div with the post title (underlined) on the left and the date on the right. The full row is clickable via `onClick={() => setSelectedId(post.id)}`.
+  </Step>
+  <Step title="Hover highlight">
+    Hovering a post row inverts the colours — the entire row background flips to `#00ffff` and the text to `#000080`. This is a CSS-only transition via Tailwind's `hover:` utilities; no JavaScript involved.
+  </Step>
+  <Step title="Post detail view">
+    When `selectedId` is not `null`, the component short-circuits and renders the detail layout instead of the index. The selected post is found with `posts.find(p => p.id === selectedId)`. Clicking the back button sets `selectedId` back to `null`.
+  </Step>
+  <Step title="Placeholder body content">
+    Post body content is currently three Lorem Ipsum paragraphs hardcoded in the JSX. To add real content, each post object needs a `content` field — see the Customization section below.
+  </Step>
+</Steps>
+
+## Post data structure
+
+Posts are defined in the `posts` array just above `BlogComponent` in `config/apps.js`:
+
+```js
+{
+  id: 1,                                                      // unique numeric ID
+  title: 'Why Tables are Actually Great for Layouts (Just Kidding)',
+  date: '10/12/2023'                                          // displayed as-is
+}
+```
+
+The full default array:
+
+```js
+const posts = [
+  { id: 1, title: 'Why Tables are Actually Great for Layouts (Just Kidding)', date: '10/12/2023' },
+  { id: 2, title: 'The Lost Art of the <marquee> Tag',                        date: '09/05/2023' },
+  { id: 3, title: 'Optimizing React Performance in 2024',                     date: '08/22/2023' },
+  { id: 4, title: 'My Journey from jQuery to Hooks',                          date: '07/14/2023' },
+  { id: 5, title: 'CSS Grid: The Ultimate Frame Breaker',                     date: '06/30/2023' },
+];
+```
+
+## Customization
+
+<Steps>
+  <Step title="Replace the posts array">
+    Find the `posts` array above `BlogComponent` in `config/apps.js` and swap in your own articles:
+
+    ```js
+    const posts = [
+      { id: 1, title: 'Building a Design System from Scratch', date: '11/01/2024' },
+      { id: 2, title: 'Why I Switched from Webpack to Vite',   date: '09/14/2024' },
+      { id: 3, title: 'The Hidden Costs of useState',          date: '08/03/2024' },
+    ];
+    ```
+  </Step>
+  <Step title="Add real post content">
+    The body of each post is currently hardcoded Lorem Ipsum paragraphs in the JSX. To support unique content per post, add a `content` field to each post object and render it dynamically:
+
+    ```js
+    // In the posts array
+    {
+      id: 1,
+      title: 'Building a Design System from Scratch',
+      date: '11/01/2024',
+      content: `Starting a design system felt daunting, but picking one primitive
+    — the Button — and getting it right first made everything else fall into place…`
+    }
+    ```
+
+    Then in the post detail JSX, replace the hardcoded `<p>` elements with:
+
+    ```jsx
+    <div className="text-lg leading-relaxed whitespace-pre-wrap">
+      {post.content ?? 'Coming soon.'}
+    </div>
+    ```
+  </Step>
+  <Step title="Change the window size">
+    The Blog app defaults to `width: 650, height: 550`. Increase the height for longer posts:
+
+    ```js
+    { id: 'blog', title: '~/blog', icon: <span>🌐</span>,
+      component: BlogComponent, width: 650, height: 650 }
+    ```
+  </Step>
+</Steps>
+
+## Core component snippet
+
+```jsx
+const BlogComponent = () => {
+  const [selectedId, setSelectedId] = React.useState(null);
+
+  // --- Post detail view ---
+  if (selectedId !== null) {
+    const post = posts.find(p => p.id === selectedId);
+    return (
+      <div className="h-full bg-[#000080] text-white p-6 font-serif overflow-auto">
+        <button className="mb-6 text-yellow-400 hover:underline font-pixel text-sm"
+                onClick={() => setSelectedId(null)}>
+          [ &lt; Back to Index ]
+        </button>
+        <h1 className="text-3xl font-bold mb-2">{post?.title}</h1>
+        <div className="text-sm text-gray-300 mb-8 font-pixel">
+          Posted on: {post?.date}
+        </div>
+        <div className="text-lg leading-relaxed space-y-4">
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit…</p>
+          <p>Ut enim ad minim veniam, quis nostrud exercitation…</p>
+          <p>Excepteur sint occaecat cupidatat non proident…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Index view ---
+  return (
+    <div className="h-full bg-black text-[#00ffff] p-6 font-pixel overflow-auto">
+      {/* Header box */}
+      <div className="text-center mb-8 border-4 border-double border-[#00ffff] p-4">
+        <h1 className="text-3xl font-bold mb-2">~/blog</h1>
+        <p className="text-sm">Musings on code, design, and the World Wide Web.</p>
+      </div>
+
+      {/* Post list */}
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between border-b border-[#00ffff] pb-2 mb-2
+                        font-bold text-yellow-400">
+          <span>Title</span>
+          <span>Date</span>
+        </div>
+        {posts.map(post => (
+          <div key={post.id}
+               className="flex justify-between p-2 cursor-pointer
+                          hover:bg-[#00ffff] hover:text-[#000080] transition-colors"
+               onClick={() => setSelectedId(post.id)}>
+            <span className="underline">{post.title}</span>
+            <span>{post.date}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-12 text-center text-xs text-gray-500">
+        Best viewed with an open mind.
+      </div>
+    </div>
+  );
+};
+```
+
+<Note>
+  The index and post detail views are rendered by the same component function using an early return — not a router. This means the back-navigation is purely in-memory state and the browser's Back button won't navigate between posts. If you want deep-linkable blog posts, consider wiring up React Router to the window system.
+</Note>

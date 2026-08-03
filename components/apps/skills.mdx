@@ -1,0 +1,176 @@
+---
+title: "Skills Window: Windows Control Panel Applets Grid"
+sidebarTitle: "Skills"
+description: "A Windows Control Panel-style skills grid where each technology is a .cpl applet — single-click to select, double-click to open a Properties dialog."
+---
+
+The Skills window (`skillz.html`) reimagines your technical skills as a Windows Control Panel applet grid. Each technology appears as a named `.cpl` icon — just like the old Sound, Display, and Mouse applets in Windows 98. Single-clicking selects a skill (highlights it in navy blue), and double-clicking opens a modal **Properties** dialog showing proficiency level, years of experience, and a short description.
+
+## Visual Design
+
+The component is built on a plain `bg-white font-pixel text-sm` base, keeping the focus on the icon grid:
+
+- **Icon grid** — `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-6` responsive grid, each cell a flex column of emoji + filename label
+- **Selection highlight** — selected item label gets `bg-win-navy text-white`; the icon itself dims to `opacity-70`
+- **Properties dialog** — a `win-border-window bg-win-gray w-80` modal centred on the page with an `absolute inset-0 bg-black/20` backdrop. The title bar uses `bg-win-navy text-white` with a pixel-art `×` close button
+
+Inside the Properties dialog:
+
+| Field | Example |
+|---|---|
+| Name (heading) | React |
+| Subtitle | System Control Panel Applet |
+| Proficiency | Expert |
+| Experience | 5 Years |
+| Description | Component lifecycle management and hook wizardry. |
+
+## Features
+
+<Steps>
+  <Step title="Single-click to select">
+    Clicking an applet icon sets `selectedId` in React state, which highlights the label and dims the icon. This mirrors the single-click-to-select behaviour of real Windows Explorer.
+  </Step>
+  <Step title="Double-click to open Properties">
+    Double-clicking sets `openId` in React state, which renders the Properties dialog. The dialog is an absolutely-positioned overlay — no third-party modal library needed.
+  </Step>
+  <Step title="Properties dialog">
+    The dialog shows the applet's icon, name, proficiency rating, years of experience, and description. The **OK** button (and the title-bar **×**) both clear `openId`, closing the modal.
+  </Step>
+</Steps>
+
+## Skill data structure
+
+Each skill is an object in the `skills` array defined just above `SkillsComponent` in `config/apps.js`:
+
+```js
+{
+  id: 'react',        // unique key used in React state
+  name: 'React.cpl', // displayed filename — keep the .cpl extension for aesthetics
+  icon: '⚛️',        // emoji shown as the applet icon
+  prof: 'Expert',    // proficiency label (Expert / Advanced / Intermediate / Master)
+  years: 5,          // years of experience — shown as "5 Years" in the dialog
+  desc: 'Component lifecycle management and hook wizardry.'
+}
+```
+
+The full default array:
+
+```js
+const skills = [
+  { id: 'react', name: 'React.cpl',      icon: '⚛️', prof: 'Expert',       years: 5,  desc: 'Component lifecycle management and hook wizardry.' },
+  { id: 'ts',    name: 'TypeScript.cpl', icon: '📘', prof: 'Advanced',     years: 4,  desc: 'Making sure undefined is not a function.' },
+  { id: 'css',   name: 'CSS3.cpl',       icon: '🎨', prof: 'Expert',       years: 8,  desc: 'Centering divs since 2015.' },
+  { id: 'node',  name: 'NodeJS.cpl',     icon: '🟢', prof: 'Intermediate', years: 3,  desc: 'Event loop enthusiast.' },
+  { id: 'git',   name: 'Git.cpl',        icon: '🌿', prof: 'Advanced',     years: 6,  desc: 'git commit -m "fixed stuff"' },
+  { id: 'html',  name: 'HTML.cpl',       icon: '🌐', prof: 'Master',       years: 10, desc: '<marquee> tags are my specialty.' },
+];
+```
+
+## Customization
+
+<Steps>
+  <Step title="Replace the skills array">
+    Find the `skills` array above `SkillsComponent` in `config/apps.js` and edit it to reflect your own stack. Add or remove objects freely — the grid reflows automatically:
+
+    ```js
+    const skills = [
+      { id: 'next',    name: 'Next.js.cpl',   icon: '▲', prof: 'Advanced',     years: 3, desc: 'SSR, ISR, and App Router enthusiast.' },
+      { id: 'python',  name: 'Python.cpl',    icon: '🐍', prof: 'Intermediate', years: 2, desc: 'Scripts, scrapers, and Flask APIs.' },
+      { id: 'figma',   name: 'Figma.cpl',     icon: '🖼️', prof: 'Advanced',     years: 4, desc: 'From wireframe to pixel-perfect component.' },
+      // …
+    ];
+    ```
+  </Step>
+  <Step title="Adjust proficiency labels">
+    The `prof` field is a free-form string — use whatever scale makes sense for you. Common options: `Beginner`, `Intermediate`, `Advanced`, `Expert`, `Master`. These are displayed verbatim in the Properties dialog.
+  </Step>
+  <Step title="Resize the window">
+    The Skills app defaults to `width: 600, height: 400` in the `apps` array. Increase both if you have more than six skills:
+
+    ```js
+    { id: 'skills', title: 'skillz.html', icon: <span>⚙️</span>,
+      component: SkillsComponent, width: 600, height: 500 }
+    ```
+  </Step>
+</Steps>
+
+## Core component snippet
+
+```jsx
+const SkillsComponent = () => {
+  const [selectedId, setSelectedId] = React.useState(null);
+  const [openId,     setOpenId]     = React.useState(null);
+  const opened = skills.find(s => s.id === openId);
+
+  return (
+    <div className="h-full bg-white font-pixel text-sm relative">
+      {/* Applet grid */}
+      <div className="p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-6">
+        {skills.map(s => (
+          <div key={s.id}
+               className="flex flex-col items-center gap-2 cursor-pointer"
+               onClick={() => setSelectedId(s.id)}
+               onDoubleClick={() => setOpenId(s.id)}>
+            <div className={`text-4xl p-2 ${selectedId === s.id ? 'opacity-70' : ''}`}>
+              {s.icon}
+            </div>
+            <div className={`text-center px-1
+              ${selectedId === s.id ? 'bg-win-navy text-white' : ''}`}>
+              {s.name}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Properties dialog */}
+      {openId && opened && (
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="win-border-window bg-win-gray w-80 shadow-xl">
+            {/* Title bar */}
+            <div className="bg-win-navy text-white px-2 py-1 flex justify-between
+                            items-center font-bold">
+              <span>{opened.name} Properties</span>
+              <button className="win-border-outset w-4 h-4 flex items-center justify-center
+                                 bg-win-gray text-black font-normal"
+                      onClick={() => setOpenId(null)}>×</button>
+            </div>
+
+            {/* Body */}
+            <div className="p-4">
+              <div className="flex items-center gap-4 mb-4 border-b border-gray-400 pb-4">
+                <div className="text-4xl">{opened.icon}</div>
+                <div>
+                  <div className="font-bold text-lg">{opened.name.replace('.cpl', '')}</div>
+                  <div className="text-gray-600">System Control Panel Applet</div>
+                </div>
+              </div>
+              <div className="space-y-2 mb-6">
+                <div className="flex">
+                  <span className="w-24 font-bold">Proficiency:</span>
+                  <span>{opened.prof}</span>
+                </div>
+                <div className="flex">
+                  <span className="w-24 font-bold">Experience:</span>
+                  <span>{opened.years} Years</span>
+                </div>
+                <div className="flex">
+                  <span className="w-24 font-bold">Description:</span>
+                  <span className="flex-1">{opened.desc}</span>
+                </div>
+              </div>
+              <div className="flex justify-end border-t border-gray-400 pt-4">
+                <button className="win-border-outset px-4 py-1 active:win-border-inset"
+                        onClick={() => setOpenId(null)}>OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+<Tip>
+  Because the Properties dialog is absolutely positioned inside the window container, it is clipped to the window bounds — it won't overflow onto the desktop. This is intentional and authentic to how Win98 dialogs behave within their parent window.
+</Tip>

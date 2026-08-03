@@ -1,0 +1,55 @@
+---
+title: "Old Windows: A Retro Win98 Portfolio Built in React"
+sidebarTitle: "Introduction"
+description: "Old Windows is a React + Vite portfolio that mimics a Windows 98 desktop, complete with draggable windows, a Start menu, taskbar, and CRT overlay."
+---
+
+Old Windows turns your personal portfolio into a fully interactive Windows 98-style desktop running entirely in the browser. Built on React, Vite, Tailwind CSS, and Framer Motion v11, it renders a teal desktop background, pixel-font desktop icons, draggable and resizable windows, a working Start menu, a live taskbar clock, and a green-digit visitor counter — all without a single backend server. Every section of the portfolio lives inside its own themed window that visitors open, drag around, minimize, and close just like a real 1998 PC.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Window management" icon="window-restore">
+    Every app opens as a floating `motion.div` that supports free dragging, minimize to taskbar, maximize to full viewport (minus the 40 px taskbar), and close. Windows stack by z-index so clicking any window brings it to the front.
+  </Card>
+  <Card title="Start menu & taskbar" icon="bars">
+    A Windows 98-style Start menu lists all nine apps and a Shut Down button. The taskbar renders a button for every open window and shows a live clock that updates every second via `setInterval`.
+  </Card>
+  <Card title="Authentic Win98 chrome" icon="desktop">
+    Tailwind custom properties replicate the classic Win98 color palette (`--win-gray`, `--win-navy`, `--win-desktop`). CSS classes `.win-border-outset` and `.win-border-inset` reproduce the 3-D beveled border effect. A `crt-overlay` div adds scanlines and a flicker animation.
+  </Card>
+  <Card title="9 built-in app windows" icon="grid-2">
+    The project ships a full set of portfolio content out of the box: home page, about, projects explorer, skills control panel, work history text editor, case studies word processor, blog terminal, guestbook contact form, and testimonials marquee.
+  </Card>
+</CardGroup>
+
+## The nine desktop apps
+
+Each icon on the desktop corresponds to one window. The file-name-style titles are intentional — they reinforce the retro theme:
+
+| Icon | Title | Content |
+|------|-------|---------|
+| 🏠 | `index.html` | Home / welcome screen with green-on-black terminal styling and a blinking "UNDER CONSTRUCTION" gif |
+| 👤 | `about_me.html` | About page with a floating avatar placeholder and bio text |
+| 📁 | `my_projects/` | Windows Explorer-style file browser listing portfolio projects |
+| ⚙️ | `skillz.html` | Control Panel applet grid of tech skills with a double-click properties dialog |
+| 📝 | `work_history.txt` | Notepad-style editor with a typewriter animation that reveals the work timeline |
+| 📖 | `case_studies/` | WordPad-style paginated document for narrative case studies |
+| 🌐 | `~/blog` | Terminal-themed blog index with a per-post reader view |
+| ✉️ | `sign_my_guestbook.cgi` | A guestbook contact form that triggers a confetti-style success state on submit |
+| 💬 | `kind_words.html` | Testimonials page with a marquee banner and lavender card grid |
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Bundler | Vite |
+| UI library | React 18 |
+| Styling | Tailwind CSS with custom Win98 color tokens |
+| Animation | Framer Motion v11 (`motion.div`, `useDragControls`) |
+| Fonts | Pixelify Sans (`font-pixel`), VT323 (`font-vt323`), Tinos (`font-serif`) |
+| Deployment | Static `dist/` — works on any CDN or static host |
+
+<Note>
+  Old Windows is designed as a **portfolio template**. The nine app windows, each icon's title, and all the content components are straightforward to swap for your own. See `config/apps.js` to register your own windows, and replace the component files in the apps array with your personal content.
+</Note>

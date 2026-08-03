@@ -1,0 +1,102 @@
+---
+title: "Taskbar: Start Menu, Window Buttons, and Clock"
+sidebarTitle: "Taskbar"
+description: "The Taskbar is a fixed bottom bar with a Start button launcher, a window button strip for all open apps, and a live system clock updated every second."
+---
+
+The `Taskbar` component occupies the fixed bottom strip of the viewport and serves as the central navigation hub for Old Windows. It is composed of three distinct sections: the **Start button** with its pop-up application menu, a **window button strip** that reflects every open window, and a **system clock** that ticks every second.
+
+## Layout
+
+The Taskbar is rendered as a `fixed bottom-0 left-0 right-0` bar with `h-10` (40px height), `bg-win-gray`, and `win-border-outset` styling. It sits at `z-[9999]`, ensuring it always renders above desktop windows. The component reads all window state via `useWindows()` and accepts no props.
+
+## Start Button
+
+The Start button lives in a `relative`-positioned container that also hosts the Start menu popup. It is referenced via a `useRef` so that clicks outside the container can close the menu.
+
+- **Icon**: A 4-color Windows logo SVG (`w-4 h-4`) with red, blue, green, and yellow quadrants
+- **Label**: `"Start"` in `font-pixel font-bold text-sm`
+- **Active style**: `win-border-inset` when the menu is open; `win-border-outset` when closed
+- **Toggle**: Clicking the button flips the `isMenuOpen` boolean state
+
+An effect listens to `document mousedown` events and closes the menu whenever a click lands outside the ref container.
+
+## Start Menu
+
+When open, the Start menu appears as `absolute bottom-full left-0 mb-1 w-64 win-border-outset bg-win-gray z-[10000]`.
+
+<Steps>
+  <Step title="Left sidebar">
+    A `w-8 bg-win-navy` panel displays the text **"Windows 98"** rotated 90° counter-clockwise. `"Windows"` is bold; `"98"` follows in regular weight. This mimics the authentic Win98 Start menu branding strip.
+  </Step>
+  <Step title="App list">
+    Maps over every entry in the `apps` config array. Each row is a full-width button showing the app's icon (`w-6 h-6`) and title (`font-pixel text-sm underline`). Clicking a row calls `openWindow(app.id, app.title, <app.component />, app.icon, { width, height })` and then closes the menu (`setMenuOpen(false)`).
+  </Step>
+  <Step title="Separator">
+    A `h-px bg-win-gray-dark border-b border-white mx-1 my-1` rule visually divides the app list from the shutdown button.
+  </Step>
+  <Step title="Shut Down...">
+    A button with a 🔌 icon that calls `window.location.reload()`, simulating a classic Windows shutdown that reloads the page.
+  </Step>
+</Steps>
+
+## Window Button Strip
+
+A `flex-1 flex gap-1 overflow-x-auto no-scrollbar` container maps over the `windows` array from context, rendering one button per window regardless of its state (including minimized windows).
+
+Each button is `min-w-[120px] max-w-[160px] truncate font-pixel text-xs` and displays the window's `icon` (if present) and `title`.
+
+**Button styles:**
+
+| Condition | Classes |
+|-----------|---------|
+| Active, non-minimized window | `win-border-inset bg-win-gray-light font-bold` |
+| All other windows | `win-border-outset` |
+
+**Click behavior (via the shared `handleWindowButtonClick` handler):**
+
+| Window state | Action |
+|---|---|
+| `'minimized'` | Calls `restoreWindow(id)` — brings the window back |
+| Active (`id === activeWindowId`) and not minimized | Calls `minimizeWindow(id)` — toggles it off |
+| Any other window | Calls `focusWindow(id)` — brings it to the front |
+
+## System Clock
+
+A `win-border-inset px-2 py-1` container at the far right of the Taskbar shows the current time.
+
+- Updated via `setInterval` every **1,000 ms**
+- Formatted with `toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })`
+- Font: `text-xs font-pixel`
+
+The interval is cleared on unmount via the effect cleanup.
+
+## Usage
+
+<Note>
+  `Taskbar` is rendered automatically inside the `Desktop` component. You do not need to add it to your JSX manually — it is always present when `Desktop` is mounted.
+</Note>
+
+```jsx
+// Taskbar is included automatically:
+<WindowProvider>
+  <Desktop /> {/* renders Taskbar internally */}
+</WindowProvider>
+```
+
+If you ever need to render the Taskbar in isolation (e.g., a Storybook story), wrap it in `WindowProvider` since it depends on `useWindows()`:
+
+```jsx
+import { WindowProvider } from './components/WindowContext'
+import { Taskbar } from './components/Taskbar'
+
+function TaskbarPreview() {
+  return (
+    <WindowProvider>
+      <div className="relative h-screen bg-win-desktop">
+        <Taskbar />
+      </div>
+    </WindowProvider>
+  )
+}
+```

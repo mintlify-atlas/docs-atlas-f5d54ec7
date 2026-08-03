@@ -1,0 +1,79 @@
+---
+title: "Desktop: The Root Canvas of Old Windows"
+sidebarTitle: "Desktop"
+description: "The Desktop component is the outermost UI shell of Old Windows. It renders the teal canvas, desktop icons, visitor counter, CRT effects, and the Taskbar."
+---
+
+The `Desktop` component is the top-level container for the entire Old Windows UI. It owns the desktop icon grid, manages icon selection state, mounts open `Window` instances, displays a retro LED visitor counter, layers authentic CRT scanline and flicker overlays, and renders the `Taskbar` at the bottom of the viewport — all on a classic Win98-teal background.
+
+## Background and Layout
+
+The desktop fills the full viewport (`w-full h-screen`) with `bg-win-desktop` (teal, `#008080`) and hides overflow. All child elements are positioned relatively or absolutely within this root container.
+
+Clicking anywhere on the bare desktop background clears the currently selected icon by resetting the selection state to `null`.
+
+## Desktop Icons
+
+Icons are read from the `apps` config array and rendered in an `absolute top-4 left-4` column. Each icon is a `flex flex-col items-center` container that is `w-20` wide, with a `gap-6` between rows.
+
+<Steps>
+  <Step title="Single click — select">
+    Clicking an icon calls `stopPropagation()` (so the root click-to-deselect does not fire) and sets the icon's `id` as the selected icon. The icon label receives `bg-win-navy` with a dotted white border to show the navy highlight.
+  </Step>
+  <Step title="Double click — open">
+    Double-clicking an icon calls `stopPropagation()` then invokes `openWindow()` from `useWindows()`, passing the app's `id`, `title`, a freshly constructed `<Component />` node, `icon`, and `{ width, height }` options. The selection state is then cleared.
+  </Step>
+</Steps>
+
+<Note>
+  The icon emoji is rendered at `text-4xl` and receives `opacity-70` when selected. The label text uses `font-pixel text-xs text-white` and gains the navy highlight class only when its `id` matches the active selection.
+</Note>
+
+## Visitor Counter
+
+A retro LED-style visitor counter is positioned `absolute bottom-12 right-4` and is `pointer-events-none` (decorative only).
+
+| Detail | Value |
+|--------|-------|
+| Initial count | `1,337,042` |
+| Increment trigger | `Math.random() > 0.7` every **3 seconds** |
+| Digit width | `w-4 h-6` per digit |
+| Font | `font-vt323 text-lg` |
+| Colors | `bg-[#111]` background, `text-[#0f0]` green digits |
+| Label | `"Visitor Count"` in `text-[10px] text-gray-400 font-pixel` |
+
+The count is zero-padded to 7 digits via `.toString().padStart(7, "0")`.
+
+## CRT Overlay Effects
+
+Two purely decorative `div` elements are appended after all other content:
+
+- **`.crt-overlay`** — applies scanlines via a global CSS class
+- **`.crt-flicker`** — a `fixed inset-0` white div using `mix-blend-overlay opacity-0` that animates a subtle screen flicker
+
+These are `pointer-events-none` and do not interfere with interaction.
+
+## Props
+
+Desktop accepts no props. It reads all window state through the `useWindows()` hook provided by `WindowProvider`.
+
+## Usage
+
+<Note>
+  `Desktop` must be wrapped in `WindowProvider`. Without it, the `useWindows()` hook will throw an error.
+</Note>
+
+```jsx
+import { WindowProvider } from './components/WindowContext'
+import { Desktop } from './components/Desktop'
+
+function App() {
+  return (
+    <WindowProvider>
+      <Desktop />
+    </WindowProvider>
+  )
+}
+```
+
+This is exactly how `main.jsx` (or your app entry point) should compose the root. The `Taskbar` is rendered *inside* `Desktop` automatically — there is no need to add it separately.

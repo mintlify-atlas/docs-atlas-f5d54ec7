@@ -1,0 +1,85 @@
+---
+title: "Install Old Windows and Run the Dev Server Locally"
+sidebarTitle: "Quickstart"
+description: "Clone the repo, install dependencies, and spin up the Vite dev server to see your Windows 98 portfolio desktop running at localhost:5173."
+---
+
+Getting Old Windows running locally takes about two minutes. The project is a pure client-side React app bundled by Vite — there is no server, no database, and no build-time environment variables required. Once the dev server starts you will see the Win98 teal desktop with all nine icons ready to open.
+
+## Prerequisites
+
+- **Node.js 18+** — Vite 5 and React 18 both require Node 18 or later.
+- A package manager: **npm** (bundled with Node), **yarn**, or **pnpm**.
+- Git, to clone the repository.
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/apursley2012/old-windows.git && cd old-windows
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+
+      ```bash pnpm
+      pnpm install
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+
+    Vite starts a hot-reloading dev server at **http://localhost:5173**. Open that URL in any modern browser to see the desktop.
+  </Step>
+
+  <Step title="Build for production">
+    ```bash
+    npm run build
+    ```
+
+    Vite compiles everything into a `dist/` folder. The output is a self-contained static site — an `index.html` that loads pre-built JS and CSS assets. No Node server is needed to serve it.
+  </Step>
+</Steps>
+
+## What you'll see after install
+
+When the browser loads, the Win98 desktop renders immediately:
+
+- **Nine desktop icons** appear in the top-left column, each labelled with its retro filename (`index.html`, `about_me.html`, `my_projects/`, and so on).
+- **Single-click** any icon to select it (the label gets a dotted navy highlight).
+- **Double-click** any icon to open that window. The window animates in from scale 0.9 and opacity 0 using Framer Motion.
+- The **taskbar** at the bottom shows a Start button, a button for every open window, and a live clock in the system tray.
+- A **CRT scanline overlay** and subtle flicker animation cover the entire viewport for full retro effect.
+- A **visitor counter** in the bottom-right corner starts at `1337042` and occasionally increments while the tab is open.
+
+## Deploying the static build
+
+The `dist/` folder produced by `npm run build` is a fully static site. You can host it anywhere that serves static files:
+
+| Platform | Steps |
+|----------|-------|
+| **GitHub Pages** | Push `dist/` to the `gh-pages` branch (or configure GitHub Actions to do so) |
+| **Netlify** | Drag-and-drop `dist/` in the Netlify dashboard, or connect the repo and set build command `npm run build`, publish directory `dist` |
+| **Vercel** | Import the repo; Vercel auto-detects Vite and sets the correct output directory |
+| **Any CDN / S3** | Upload the contents of `dist/` and configure the bucket for static website hosting |
+
+<Tip>
+  A `.nojekyll` file is already included in the project root. This tells GitHub Pages to serve the site as-is without running it through Jekyll, which is necessary because Vite's output uses underscore-prefixed asset folders that Jekyll would otherwise ignore.
+</Tip>
+
+## Customizing your content
+
+After the dev server is running, open `config/apps.js` to see the `apps` array. Each entry in that array defines one desktop icon and its corresponding window. Add a new object to register your own window, or replace the existing component references with your own React components. See [App Config](/architecture/app-config) for the full field reference.

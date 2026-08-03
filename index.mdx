@@ -1,20 +1,72 @@
 ---
-title: "Introduction"
-description: "Welcome to your project"
+title: "Old Windows: Windows 98-Style React Portfolio"
+sidebarTitle: "Home"
+description: "Old Windows is a retro Windows 98-inspired personal portfolio built with React, Vite, Tailwind CSS, and Framer Motion — complete with a draggable desktop, Start menu, and taskbar."
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+Old Windows is a fully interactive, browser-based desktop environment that reimagines the Windows 98 aesthetic as a developer portfolio. Every section of the portfolio lives inside a resizable, draggable window — from your work history in a Notepad clone to your projects displayed in a Windows Explorer-style file manager. The entire experience is built on React with Framer Motion driving the window animations and a custom CSS system for the authentic beveled Win98 borders, pixel fonts, and CRT scanline overlay.
 
-<Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="flag" href="/introduction">
+    Learn what Old Windows is, why it was built, and how it fits together as a portfolio template.
+  </Card>
+  <Card title="Getting Started" icon="rocket" href="/getting-started">
+    Clone the repo, install dependencies, and spin up the dev server in minutes.
+  </Card>
+  <Card title="Architecture Overview" icon="sitemap" href="/architecture/overview">
+    Understand the component hierarchy, state management, and data flow powering the desktop.
+  </Card>
+  <Card title="Adding Apps" icon="grid-2-plus" href="/customization/adding-apps">
+    Register your own window apps in the config and watch them appear on the desktop.
+  </Card>
+</CardGroup>
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+## What's Inside
+
+<CardGroup cols={3}>
+  <Card title="Desktop" icon="display" href="/components/desktop">
+    The root canvas — icons, open windows, visitor counter, CRT overlay, and taskbar.
+  </Card>
+  <Card title="Window" icon="window" href="/components/window">
+    Draggable, resizable window shell with minimize, maximize, and close controls.
+  </Card>
+  <Card title="Taskbar" icon="bars" href="/components/taskbar">
+    Start menu, active window buttons, and a live system clock.
+  </Card>
+  <Card title="WindowContext" icon="diagram-project" href="/components/window-context">
+    React context and hook powering all window state management.
+  </Card>
+  <Card title="Theming" icon="palette" href="/customization/theme">
+    CSS custom properties for Win98 colors and the Tailwind configuration.
+  </Card>
+  <Card title="CRT Effects" icon="tv-retro" href="/customization/crt-effects">
+    Scanline overlay and flicker animation that give the screen its retro glow.
+  </Card>
+</CardGroup>
+
+## Quick Look
+
+<Steps>
+  <Step title="Clone and install">
+    ```bash
+    git clone https://github.com/apursley2012/old-windows.git
+    cd old-windows
+    npm install
+    ```
+  </Step>
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:5173](http://localhost:5173) — the Windows 98 desktop loads immediately.
+  </Step>
+  <Step title="Edit your apps">
+    Open `config/apps.js` and replace the placeholder content in each app component with your own portfolio content.
+  </Step>
+  <Step title="Deploy">
+    ```bash
+    npm run build
+    ```
+    The `dist/` output is a static site — deploy it to GitHub Pages, Netlify, Vercel, or any static host.
+  </Step>
+</Steps>
