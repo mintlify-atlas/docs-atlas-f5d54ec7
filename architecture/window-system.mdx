@@ -14,9 +14,9 @@ Windows are born and die inside `WindowContext`. The context maintains a `window
 {
   id: 'about',
   title: 'about_me.html',
-  component: <AboutComponent />,
-  icon: '👤',
-  state: 'open',       // 'open' | 'minimized' | 'maximized'
+  component: <AboutComponent />,  // JSX element, pre-rendered at open time
+  icon: <span>👤</span>,          // JSX element from the apps config
+  state: 'open',                  // 'open' | 'minimized' | 'maximized'
   zIndex: 11,
   width: 500,
   height: 450,
@@ -68,7 +68,10 @@ return (
     style={{ zIndex }}
   >
     {/* Title bar — this is where the drag actually starts */}
-    <div onPointerDown={(e) => { if (!isMaximized) dragControls.start(e); }}>
+    <div
+      onPointerDown={(e) => { if (!isMaximized) dragControls.start(e); focusWindow(id); }}
+      onDoubleClick={() => isMaximized ? restoreWindow(id) : maximizeWindow(id)}
+    >
       {/* window title, minimize / maximize / close buttons */}
     </div>
     {/* Window body */}
@@ -95,14 +98,15 @@ The active window's title bar uses the navy background (`bg-win-navy text-white`
 
 ## z-index management
 
-`WindowContext.js` declares a module-level variable `let zIndex = 10` outside any React component. Every call to `focusWindow(id)` executes:
+`WindowContext.js` declares a module-level counter initialized to `10` outside any React component. Every call to `focusWindow(id)` increments this counter and sets the new value as the window's `zIndex`:
 
 ```js
-zIndex += 1;
-// then updates the matching window object with the new zIndex value
+// module-level counter, starts at 10
+counter += 1;
+// window object is updated: { ...window, zIndex: counter }
 ```
 
-Because the variable lives at module scope it persists across re-renders and across calls to any of the context actions. The result is a simple monotonically increasing counter: each newly focused window gets a higher z-index than every other window, so the most recently touched window is always on top. New windows created by `openWindow` also increment `zIndex` and apply it immediately.
+Because the counter lives at module scope it persists across re-renders and across calls to any of the context actions. The result is a simple monotonically increasing sequence: each newly focused window gets a higher z-index than every other window, so the most recently touched window is always on top. New windows created by `openWindow` also increment the counter and apply it immediately.
 
 ## Default positioning (cascade)
 

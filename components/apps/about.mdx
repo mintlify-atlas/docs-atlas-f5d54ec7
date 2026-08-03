@@ -26,7 +26,7 @@ The window draws on classic web publishing conventions rather than the terminal 
     Each paragraph uses `text-lg leading-relaxed` for comfortable readability. They cover your origin story, current specialisation, and a personal fun-fact or hobby to add personality.
   </Step>
   <Step title="WebRing membership badge">
-    The bottom section is separated by a `border-t-2 border-dashed border-gray-400` rule. The three WebRing buttons (`[< Prev]`, `[Random]`, `[Next >]`) are plain `<button>` elements — wire them up to real URLs if you want a functional ring.
+    The bottom section is separated by a `border-t-2 border-dashed border-gray-400` rule. The three WebRing buttons (`[< Prev]`, `[Random]`, `[Next >]`) are plain `<button>` elements with no `onClick` handlers — they are purely decorative retro chrome.
   </Step>
 </Steps>
 
@@ -67,14 +67,14 @@ The window draws on classic web publishing conventions rather than the terminal 
     </p>
     ```
   </Step>
-  <Step title="Wire up the WebRing buttons">
-    The three WebRing buttons currently have no `onClick` handlers. Add `href` links or `onClick` callbacks pointing to your actual ring neighbours:
+  <Step title="Replace the WebRing text">
+    The three WebRing buttons (`[< Prev]`, `[Random]`, `[Next >]`) have no `onClick` handlers — they are purely decorative chrome. To keep the retro look but surface a real link, swap the badge paragraph for your own text or remove the section entirely if you don't want it:
 
     ```jsx
-    <button onClick={() => window.open('https://webring.example.com/prev', '_blank')}
-            className="hover:text-blue-500">
-      [&lt; Prev]
-    </button>
+    {/* Keep decorative — or remove the whole block */}
+    <p className="font-pixel text-sm mb-2">
+      This site is a proud member of the Web Developers Ring
+    </p>
     ```
   </Step>
   <Step title="Change the window size">

@@ -1,7 +1,7 @@
 ---
-title: "Desktop: The Root Canvas of Old Windows"
+title: "Desktop: Win98 Canvas, Icon Grid, and CRT Overlays"
 sidebarTitle: "Desktop"
-description: "The Desktop component is the outermost UI shell of Old Windows. It renders the teal canvas, desktop icons, visitor counter, CRT effects, and the Taskbar."
+description: "The Desktop component renders the teal Win98 canvas, desktop icon grid, LED visitor counter, CRT overlay effects, and the Taskbar for Old Windows."
 ---
 
 The `Desktop` component is the top-level container for the entire Old Windows UI. It owns the desktop icon grid, manages icon selection state, mounts open `Window` instances, displays a retro LED visitor counter, layers authentic CRT scanline and flicker overlays, and renders the `Taskbar` at the bottom of the viewport — all on a classic Win98-teal background.
@@ -51,11 +51,11 @@ Two purely decorative `div` elements are appended after all other content:
 - **`.crt-overlay`** — applies scanlines via a global CSS class
 - **`.crt-flicker`** — a `fixed inset-0` white div using `mix-blend-overlay opacity-0` that animates a subtle screen flicker
 
-These are `pointer-events-none` and do not interfere with interaction.
+Both are `pointer-events-none` and do not interfere with interaction.
 
 ## Props
 
-Desktop accepts no props. It reads all window state through the `useWindows()` hook provided by `WindowProvider`.
+`Desktop` accepts no props. It reads all window state through the `useWindows()` hook provided by `WindowProvider`.
 
 ## Usage
 

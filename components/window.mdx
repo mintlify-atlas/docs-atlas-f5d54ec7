@@ -1,10 +1,10 @@
 ---
-title: "Window Component: Draggable Win98 Window Shell"
+title: "Window Component: Win98 Draggable Application Shell"
 sidebarTitle: "Window"
-description: "Window renders a Win98 frame with a draggable title bar, minimize/maximize/close buttons, a Framer Motion scale-in animation, and a WebRing navigation bar."
+description: "Window renders a Win98 frame with a draggable title bar, minimize/maximize/close buttons, a Framer Motion pop-in animation, and a WebRing status bar."
 ---
 
-The `Window` component is the visual and interactive shell for every application in Old Windows. It wraps any arbitrary React content in an authentic Windows 98–style frame complete with a navy active-title-bar, Framer Motion drag, animated open transitions, and a WebRing navigation status bar. Desktop creates one `Window` per entry in the `windows` state array.
+The `Window` component is the visual and interactive shell for every application in Old Windows. It wraps any arbitrary React content in an authentic Windows 98–style frame complete with a navy active-title-bar, Framer Motion drag, an animated open transition, and a WebRing navigation status bar at the bottom. `Desktop` creates one `Window` per entry in the `windows` state array.
 
 ## The `windowData` Prop
 
@@ -43,11 +43,11 @@ The `Window` component is the visual and interactive shell for every application
 </ParamField>
 
 <ParamField path="defaultX" type="number">
-  Initial horizontal offset from the left edge of the desktop in pixels. Used as the Framer Motion `x` drag origin.
+  Initial horizontal offset from the left edge of the desktop in pixels. Used as the Framer Motion `x` starting position.
 </ParamField>
 
 <ParamField path="defaultY" type="number">
-  Initial vertical offset from the top edge of the desktop in pixels. Used as the Framer Motion `y` drag origin.
+  Initial vertical offset from the top edge of the desktop in pixels. Used as the Framer Motion `y` starting position.
 </ParamField>
 
 ## Behavior
@@ -58,24 +58,29 @@ When `state === 'minimized'`, `Window` returns `null` immediately. The window di
 
 ### Maximized State
 
-When `state === 'maximized'`, the window fills the full viewport width and `calc(100% - 40px)` height (leaving room for the Taskbar). It is pinned to `top-0 left-0` via inline styles, and Framer Motion drag is disabled.
+When `state === 'maximized'`, the window fills the full viewport width and `calc(100% - 40px)` height (leaving room for the Taskbar). The className adds `w-full h-full top-0 left-0`, and the inline `style` sets `width: '100%'` and `height: 'calc(100% - 40px)'`. Framer Motion drag is disabled via `drag={!isMaximized}`.
 
 ### Title Bar Styles
 
-| Condition | Title Bar Class |
-|-----------|----------------|
+| Condition | Title Bar Classes |
+|-----------|------------------|
 | This window is the active window | `bg-win-navy text-white` |
 | Any other window | `bg-win-gray-dark text-win-gray-light` |
 
-Clicking anywhere on a window calls `focusWindow(id)` to bring it to front and apply the active style.
+Clicking anywhere on a window fires `onMouseDown`, which calls `focusWindow(id)` to bring it to front and apply the active title bar style.
 
 ### Drag
 
-Dragging is powered by Framer Motion's `drag` and `dragControls` props. `dragControls.start(event)` is called from an `onPointerDown` handler attached to the title bar, so only the title bar initiates a drag. Drag is disabled (`drag={false}`) when `state === 'maximized'`.
+Dragging is powered by Framer Motion's `drag` and `dragControls` props. `dragControls.start(event)` is called from an `onPointerDown` handler attached to the title bar div, so only the title bar initiates a drag. The props are:
+
+- `drag={!isMaximized}` — drag is enabled only when the window is not maximized
+- `dragControls` — a `useDragControls()` instance
+- `dragListener={false}` — disables Framer Motion's built-in pointer listener so only the manual `dragControls.start()` triggers drags
+- `dragMomentum={false}` — windows stop exactly where released, no sliding
 
 ### Open Animation
 
-On mount, each window animates from `{ scale: 0.9, opacity: 0 }` to `{ scale: 1, opacity: 1 }` using Framer Motion's `initial` / `animate` props, giving it a snappy pop-in effect.
+On mount, each window animates from `{ x: defaultX, y: defaultY, scale: 0.9, opacity: 0 }` to `{ scale: 1, opacity: 1 }` using Framer Motion's `initial` / `animate` props, giving it a snappy pop-in at its configured starting position. When the window is maximized, the `initial` prop is set to `false` to skip the entry animation, and it animates to `{ x: 0, y: 0, scale: 1, opacity: 1 }`.
 
 ### Double-click Title Bar
 
@@ -85,27 +90,27 @@ Double-clicking the title bar toggles between `'maximized'` and `'open'` states 
 
 <Steps>
   <Step title="Minimize">
-    Renders a horizontal bar SVG inside a `win-border-outset` button. Calls `minimizeWindow(id)`, setting `state` to `'minimized'` and removing the window from the DOM.
+    Renders a `<span className="block w-2 h-0.5 bg-black mt-2">` — a small horizontal bar — inside a `win-border-outset` button. Calls `minimizeWindow(id)`, setting `state` to `'minimized'` and removing the window from the DOM.
   </Step>
   <Step title="Maximize / Restore">
-    Renders a single-square SVG when `state === 'open'` (maximize), or a dual-overlapping-square SVG when `state === 'maximized'` (restore). Calls `maximizeWindow(id)` or `restoreWindow(id)` accordingly.
+    When unmaximized: renders `<div className="w-2.5 h-2.5 border border-black border-t-2">` (a square with a thick top border). When maximized: renders a restore SVG (`10×10`) with two overlapping rectangles drawn via `<path>`. Calls `maximizeWindow(id)` or `restoreWindow(id)` accordingly.
   </Step>
   <Step title="Close">
-    Renders an X SVG. Calls `closeWindow(id)`, which removes the window object from the `windows` array entirely.
+    Renders an X SVG (`8×8`) with two crossing `<line>` elements. Calls `closeWindow(id)`, which removes the window object from the `windows` array entirely.
   </Step>
 </Steps>
 
 ## WebRing Status Bar
 
-A fixed status bar sits at the bottom of every window body. It contains three equally styled `win-border-outset` buttons that navigate between apps using the global `apps` config array:
+A status bar sits at the bottom of every window body. It contains three equally styled `win-border-outset` buttons that navigate between apps using the global `apps` config array. Each button first **closes the current window** via `closeWindow(id)`, then opens the target app:
 
 | Button | Behavior |
 |--------|----------|
-| **Prev** | Opens the previous app in the `apps` array (wraps around) |
-| **Random** | Opens a randomly selected app |
-| **Next** | Opens the next app in the `apps` array (wraps around) |
+| **&lt; Prev** | Closes current window, then opens `apps[(index - 1 + length) % length]` |
+| **Random** | Closes current window, then opens a randomly selected app |
+| **Next &gt;** | Closes current window, then opens `apps[(index + 1) % length]` |
 
-Clicking any WebRing button calls `openWindow` with the target app's config, simulating a classic late-90s WebRing navigation experience.
+This mimics classic late-90s WebRing navigation, cycling through the portfolio sections.
 
 ## Example
 

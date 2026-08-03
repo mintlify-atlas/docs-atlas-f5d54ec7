@@ -1,5 +1,5 @@
 ---
-title: "Taskbar: Start Menu, Window Buttons, and Clock"
+title: "Taskbar: Start Menu, Window Button Strip, and Clock"
 sidebarTitle: "Taskbar"
 description: "The Taskbar is a fixed bottom bar with a Start button launcher, a window button strip for all open apps, and a live system clock updated every second."
 ---
@@ -14,7 +14,7 @@ The Taskbar is rendered as a `fixed bottom-0 left-0 right-0` bar with `h-10` (40
 
 The Start button lives in a `relative`-positioned container that also hosts the Start menu popup. It is referenced via a `useRef` so that clicks outside the container can close the menu.
 
-- **Icon**: A 4-color Windows logo SVG (`w-4 h-4`) with red, blue, green, and yellow quadrants
+- **Icon**: A 4-color Windows logo SVG (`w-4 h-4`) with four colored quadrant squares: red (`#f87171`), blue (`#60a5fa`), green (`#4ade80`), yellow (`#facc15`)
 - **Label**: `"Start"` in `font-pixel font-bold text-sm`
 - **Active style**: `win-border-inset` when the menu is open; `win-border-outset` when closed
 - **Toggle**: Clicking the button flips the `isMenuOpen` boolean state
@@ -30,7 +30,7 @@ When open, the Start menu appears as `absolute bottom-full left-0 mb-1 w-64 win-
     A `w-8 bg-win-navy` panel displays the text **"Windows 98"** rotated 90° counter-clockwise. `"Windows"` is bold; `"98"` follows in regular weight. This mimics the authentic Win98 Start menu branding strip.
   </Step>
   <Step title="App list">
-    Maps over every entry in the `apps` config array. Each row is a full-width button showing the app's icon (`w-6 h-6`) and title (`font-pixel text-sm underline`). Clicking a row calls `openWindow(app.id, app.title, <app.component />, app.icon, { width, height })` and then closes the menu (`setMenuOpen(false)`).
+    Maps over every entry in the `apps` config array. Each row is a full-width button showing the app's icon (`w-6 h-6`) and title (`font-pixel text-sm underline`). Clicking a row calls `openWindow(app.id, app.title, <app.component />, app.icon, { width, height })` and then closes the menu.
   </Step>
   <Step title="Separator">
     A `h-px bg-win-gray-dark border-b border-white mx-1 my-1` rule visually divides the app list from the shutdown button.
@@ -53,7 +53,7 @@ Each button is `min-w-[120px] max-w-[160px] truncate font-pixel text-xs` and dis
 | Active, non-minimized window | `win-border-inset bg-win-gray-light font-bold` |
 | All other windows | `win-border-outset` |
 
-**Click behavior (via the shared `handleWindowButtonClick` handler):**
+**Click behavior:**
 
 | Window state | Action |
 |---|---|

@@ -1,5 +1,5 @@
 ---
-title: "WindowContext: Hook and Provider for Window State"
+title: "WindowContext: Global Window State Hook and Provider"
 sidebarTitle: "WindowContext"
 description: "WindowContext is the state backbone of Old Windows. WindowProvider owns the windows array; useWindows() exposes open, close, minimize, maximize, and focus."
 ---
@@ -23,14 +23,14 @@ function App() {
 }
 ```
 
-`WindowProvider` initialises two pieces of state:
+`WindowProvider` initialises two pieces of React state:
 
 | State | Type | Initial value |
 |-------|------|---------------|
 | `windows` | `Array` | `[]` |
 | `activeWindowId` | `string \| null` | `null` |
 
-It also maintains a module-level `zIndex` counter (starting at `10`) that is incremented each time `focusWindow` is called, ensuring a newly focused window always renders on top.
+It also maintains a module-level `zIndex` counter initialised to `10` (`let x = 10`). This counter is incremented by `openWindow` when creating a new window and by `focusWindow` whenever a window is brought to front, so the newly focused window always renders on top.
 
 ## `useWindows()` Hook
 
@@ -71,7 +71,7 @@ Call `useWindows()` inside any component that is a descendant of `WindowProvider
 </ResponseField>
 
 <ResponseField name="focusWindow" type="function">
-  `focusWindow(id: string) => void` — Increments the global `zIndex` counter, assigns the new value to the target window, and sets `activeWindowId` to the window's `id`. Called automatically by `maximizeWindow` and `restoreWindow`, and by `Window` itself when clicked.
+  `focusWindow(id: string) => void` — Increments the module-level `zIndex` counter, assigns the new value to the target window, and sets `activeWindowId` to the window's `id`. Called automatically by `maximizeWindow` and `restoreWindow`, and by `Window` itself on `mousedown`.
 </ResponseField>
 
 ## `openWindow` Options
@@ -86,7 +86,7 @@ openWindow(id, title, component, icon, options)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | `string` | Unique identifier. If a window with this `id` already exists, it is restored/focused instead of duplicated. |
+| `id` | `string` | Unique identifier. If a window with this `id` already exists, it is restored or focused instead of duplicated. |
 | `title` | `string` | Text shown in the title bar and Taskbar button. |
 | `component` | `ReactNode` | The content to render inside the window body. |
 | `icon` | `ReactNode` | Emoji or element shown next to the title. |
@@ -113,8 +113,8 @@ openWindow(id, title, component, icon, options)
 
 If `openWindow` is called with an `id` that already exists in the `windows` array:
 
-- If that window is **minimized**, it is restored to `'open'` and `focusWindow` is called via `setTimeout`.
-- If it is already **open or maximized**, `focusWindow` is called immediately and no duplicate is created.
+- If that window is **minimized**, its `state` is set back to `'open'` and `focusWindow` is scheduled via `setTimeout` to run after the state update.
+- If it is already **open or maximized**, `focusWindow` is scheduled via `setTimeout` and the `windows` array is returned unchanged — no duplicate is created.
 
 ## Programmatic Usage Example
 
